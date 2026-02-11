@@ -7,11 +7,15 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "serve:ssr:BIT210-Service-Day-Dashboard": "node dist/BIT210-Service-Day-Dashboard/server/server.mjs"
+    "serve:ssr:BIT210-Service-Day-Dashboard": "node dist/BIT210-Service-Day-Dashboard/server/server.mjs",
+    "format": "prettier --write ."
   },
   "prettier": {
     "printWidth": 100,
     "singleQuote": true,
+    "plugins": [
+      "prettier-plugin-tailwindcss"
+    ],
     "overrides": [
       {
         "files": "*.html",
@@ -45,6 +49,8 @@
     "@types/node": "^20.17.19",
     "jsdom": "^27.1.0",
     "postcss": "^8.5.3",
+    "prettier": "^3.8.1",
+    "prettier-plugin-tailwindcss": "^0.7.2",
     "tailwindcss": "^4.1.12",
     "typescript": "~5.9.2",
     "vitest": "^4.0.8"
