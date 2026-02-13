@@ -1,3 +1,13 @@
 /* You can add global styles to this file, and also import other style files */
 
-@import "tailwindcss";
+@import 'tailwindcss';
+
+* {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+@theme {
+  --color-primary: #27619b;
+  --color-green: #36a17d;
+  --color-red: #dc2828;
+}
