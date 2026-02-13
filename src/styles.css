@@ -6,6 +6,10 @@
   font-family: var(--font-nunito);
 }
 
+body {
+  background-color: rgb(250, 250, 250);
+}
+
 @theme {
   --font-nunito: 'Nunito', sans-serif;
   --color-primary: #27619b;
