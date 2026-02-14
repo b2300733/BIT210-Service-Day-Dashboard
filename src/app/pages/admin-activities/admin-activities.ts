@@ -16,7 +16,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { LucideAngularModule, Plus, Pencil, Trash2 } from 'lucide-angular';
+import { LucideAngularModule, Plus, Pencil, Trash2, Calendar, MapPin, Clock } from 'lucide-angular';
 
 export interface PeriodicElement {
   name: string;
@@ -91,6 +91,9 @@ export class AdminActivitiesPage implements AfterViewInit {
   readonly Plus = Plus;
   readonly Pencil = Pencil;
   readonly Trash2 = Trash2;
+  readonly Calendar = Calendar;
+  readonly MapPin = MapPin;
+  readonly Clock = Clock;
 
   readonly dialog = inject(MatDialog);
 

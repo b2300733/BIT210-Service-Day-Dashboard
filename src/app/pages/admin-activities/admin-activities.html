@@ -11,6 +11,7 @@
   </div>
 
   <div class="px-6!">
+    <!-- large screens -->
     <div class="hidden lg:block">
       @if (dataSource.data.length > 0) {
         <table
@@ -170,6 +171,87 @@
             class="transition-colors duration-200 hover:bg-gray-50!"
           ></tr>
         </table>
+      } @else {
+        <div class="flex flex-col items-center justify-center py-16 text-gray-500">
+          <div class="text-lg font-semibold">No activities yet</div>
+          <div class="text-sm">Click "Add Activity" to create activity</div>
+        </div>
+      }
+    </div>
+
+    <!-- Mobile screens -->
+    <div class="flex flex-col gap-3 lg:hidden">
+      @if (dataSource.data.length > 0) {
+        @for (element of dataSource.data; track element.name) {
+          <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-xs">
+            <!-- Header -->
+            <div class="mb-3 flex items-start justify-between">
+              <div class="flex-1">
+                <div class="text-base font-semibold">{{ element.name }}</div>
+                <div class="text-sm text-gray-500">{{ element.serviceType }}</div>
+              </div>
+              <div
+                [class]="
+                  element.status === 'Closed' || element.status === 'Full'
+                    ? 'bg-red inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold text-white'
+                    : 'bg-green inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold text-white'
+                "
+              >
+                {{ element.status }}
+              </div>
+            </div>
+
+            <!-- Details -->
+            <div class="mb-3 flex flex-col gap-2 text-sm text-gray-500">
+              <div class="flex items-center gap-2">
+                <lucide-angular [img]="Calendar" class="h-4 w-4" />
+                <span>{{ element.scheduleDate }} at {{ element.scheduleTime }}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <lucide-angular [img]="MapPin" class="h-4 w-4" />
+                <span>{{ element.location }}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <lucide-angular [img]="Clock" class="h-4 w-4" />
+                <span>Cutoff: {{ element.cutoffDate }} {{ element.cutoffTime }}</span>
+              </div>
+            </div>
+
+            <!-- Slots -->
+            <div class="mb-4">
+              <div class="mb-1 flex items-center justify-between text-sm">
+                <span>Slots</span>
+                <span class="font-semibold">{{ element.registered }}/{{ element.totalSlots }}</span>
+              </div>
+              <div class="h-2 w-full overflow-hidden rounded-full bg-gray-200">
+                <div
+                  class="bg-primary h-full"
+                  [style.width.%]="getSlotPercentage(element.registered, element.totalSlots)"
+                ></div>
+              </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex gap-2">
+              <button
+                type="button"
+                (click)="openAddEdit(element)"
+                class="hover:bg-green flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-md border border-gray-300 px-4 py-2 text-sm transition duration-200 hover:text-white"
+              >
+                <lucide-angular [img]="Pencil" class="h-4 w-4" />
+                Edit
+              </button>
+              <button
+                type="button"
+                (click)="openDelete(element)"
+                class="text-red hover:bg-red hover:border-red flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-md border border-gray-300 px-4 py-2 text-sm transition duration-200 hover:text-white"
+              >
+                <lucide-angular [img]="Trash2" class="h-4 w-4" />
+                Delete
+              </button>
+            </div>
+          </div>
+        }
       } @else {
         <div class="flex flex-col items-center justify-center py-16 text-gray-500">
           <div class="text-lg font-semibold">No activities yet</div>
