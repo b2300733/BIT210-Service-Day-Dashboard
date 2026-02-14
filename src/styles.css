@@ -3,7 +3,7 @@
 @import 'tailwindcss';
 
 * {
-  font-family: var(--font-nunito);
+  font-family: var(--font-nunito) !important;
 }
 
 body {
