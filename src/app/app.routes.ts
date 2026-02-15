@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { LoginPage } from './pages/login/login';
 import { AdminDashboardPage } from './pages/admin-dashboard/admin-dashboard';
 import { AdminActivitiesPage } from './pages/admin-activities/admin-activities';
+import { AdminParticipationMonitorPage } from './pages/admin-participation-monitor/admin-participation-monitor';
 
 import { EmployeeDashboardPage } from './pages/employee-dashboard/employee-dashboard';
 
@@ -13,7 +14,7 @@ export const routes: Routes = [
     children: [
       { path: '', redirectTo: 'activities', pathMatch: 'full' },
       { path: 'activities', component: AdminActivitiesPage },
-      { path: 'participation', component: LoginPage }, // Replace with actual component
+      { path: 'participation', component: AdminParticipationMonitorPage },
       { path: 'notifications', component: LoginPage }, // Replace with actual component
       { path: 'qr-checkin', component: LoginPage }, // Replace with actual component
     ],

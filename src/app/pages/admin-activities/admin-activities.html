@@ -32,7 +32,7 @@
               NGO / Activity
             </th>
             <td mat-cell *matCellDef="let element">
-              <div class="inline-flex flex-col py-4">
+              <div class="inline-flex flex-col py-6">
                 <div class="font-semibold">{{ element.name }}</div>
                 <div class="text-xs text-gray-500">{{ element.serviceType }}</div>
               </div>
@@ -50,7 +50,7 @@
               Schedule
             </th>
             <td mat-cell *matCellDef="let element">
-              <div class="inline-flex flex-col py-4">
+              <div class="inline-flex flex-col py-6">
                 <div>{{ element.scheduleDate }}</div>
                 <div class="text-xs text-gray-500">{{ element.scheduleTime }}</div>
               </div>
@@ -67,7 +67,7 @@
             >
               Location
             </th>
-            <td mat-cell *matCellDef="let element" class="py-4">{{ element.location }}</td>
+            <td mat-cell *matCellDef="let element" class="py-6">{{ element.location }}</td>
           </ng-container>
 
           <ng-container matColumnDef="slots">
@@ -80,7 +80,7 @@
             >
               Slots
             </th>
-            <td mat-cell *matCellDef="let element" class="py-4">
+            <td mat-cell *matCellDef="let element" class="py-6">
               <div class="inline-flex flex-col gap-1">
                 <div>{{ element.registered }} / {{ element.totalSlots }}</div>
                 <div class="h-1.5 w-20 overflow-hidden rounded-full bg-gray-200">
@@ -103,7 +103,7 @@
             >
               Cutoff
             </th>
-            <td mat-cell *matCellDef="let element" class="py-4">
+            <td mat-cell *matCellDef="let element" class="py-6">
               <div class="inline-flex flex-col">
                 <div>{{ element.cutoffDate }}</div>
                 <div class="text-xs text-gray-500">{{ element.cutoffTime }}</div>
@@ -121,15 +121,15 @@
             >
               Status
             </th>
-            <td mat-cell *matCellDef="let element" class="py-4">
+            <td mat-cell *matCellDef="let element" class="py-6">
               <div
                 [class]="
-                  element.status === 'Closed' || element.status === 'Full'
+                  getStatus(element) === 'Closed' || getStatus(element) === 'Full'
                     ? 'bg-red inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold text-white'
                     : 'bg-green inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold text-white'
                 "
               >
-                {{ element.status }}
+                {{ getStatus(element) }}
               </div>
             </td>
           </ng-container>
@@ -144,7 +144,7 @@
             >
               Action
             </th>
-            <td mat-cell *matCellDef="let element" class="py-4">
+            <td mat-cell *matCellDef="let element" class="py-6">
               <div class="inline-flex gap-2">
                 <button
                   type="button"
@@ -192,12 +192,12 @@
               </div>
               <div
                 [class]="
-                  element.status === 'Closed' || element.status === 'Full'
+                  getStatus(element) === 'Closed' || getStatus(element) === 'Full'
                     ? 'bg-red inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold text-white'
                     : 'bg-green inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold text-white'
                 "
               >
-                {{ element.status }}
+                {{ getStatus(element) }}
               </div>
             </div>
 

@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ViewChild, inject } from '@angular/core';
+import { AfterViewInit, Component, ViewChild, inject, OnInit } from '@angular/core';
 import { LiveAnnouncer } from '@angular/cdk/a11y';
 import { MatSort, Sort, MatSortModule } from '@angular/material/sort';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
@@ -17,7 +17,8 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { LucideAngularModule, Plus, Pencil, Trash2, Calendar, MapPin, Clock } from 'lucide-angular';
-import { Activity, ACTIVITIES_DATA } from '../../data/activities.data';
+import { Activity } from '../../data/activities.data';
+import { ActivitiesService } from '../../services/activities.service';
 
 @Component({
   selector: 'app-admin-activities',
@@ -25,7 +26,7 @@ import { Activity, ACTIVITIES_DATA } from '../../data/activities.data';
   templateUrl: './admin-activities.html',
   styleUrl: './admin-activities.css',
 })
-export class AdminActivitiesPage implements AfterViewInit {
+export class AdminActivitiesPage implements AfterViewInit, OnInit {
   readonly Plus = Plus;
   readonly Pencil = Pencil;
   readonly Trash2 = Trash2;
@@ -34,6 +35,7 @@ export class AdminActivitiesPage implements AfterViewInit {
   readonly Clock = Clock;
 
   readonly dialog = inject(MatDialog);
+  private activitiesService = inject(ActivitiesService);
 
   openDelete(element: Activity) {
     const dialogRef = this.dialog.open(DeleteActivitiesDialog, {
@@ -42,9 +44,7 @@ export class AdminActivitiesPage implements AfterViewInit {
 
     dialogRef.afterClosed().subscribe((result) => {
       if (result) {
-        // Remove the activity from data source
-        const data = this.dataSource.data.filter((item) => item !== element);
-        this.dataSource.data = data;
+        this.activitiesService.deleteActivity(element);
       }
     });
   }
@@ -58,14 +58,10 @@ export class AdminActivitiesPage implements AfterViewInit {
       if (result) {
         if (element) {
           // Edit mode - update existing activity
-          const index = this.dataSource.data.indexOf(element);
-          if (index !== -1) {
-            this.dataSource.data[index] = result;
-            this.dataSource.data = [...this.dataSource.data];
-          }
+          this.activitiesService.updateActivity(element, result);
         } else {
           // Add mode - add new activity
-          this.dataSource.data = [...this.dataSource.data, result];
+          this.activitiesService.addActivity(result);
         }
       }
     });
@@ -82,9 +78,15 @@ export class AdminActivitiesPage implements AfterViewInit {
     'status',
     'action',
   ];
-  dataSource = new MatTableDataSource(ACTIVITIES_DATA);
+  dataSource = new MatTableDataSource<Activity>([]);
 
   @ViewChild(MatSort) sort!: MatSort;
+
+  ngOnInit() {
+    this.activitiesService.activities$.subscribe((activities) => {
+      this.dataSource.data = activities;
+    });
+  }
 
   ngAfterViewInit() {
     this.dataSource.sort = this.sort;
@@ -100,6 +102,10 @@ export class AdminActivitiesPage implements AfterViewInit {
 
   getSlotPercentage(registered: number, totalSlots: number): number {
     return (registered / totalSlots) * 100;
+  }
+
+  getStatus(activity: Activity): string {
+    return this.activitiesService.getActivityStatus(activity);
   }
 }
 
@@ -148,7 +154,6 @@ export class AddEditActivitiesDialog {
         totalSlots: [this.data?.totalSlots || 0, [Validators.required, Validators.min(1)]],
         cutoffDate: [this.data?.cutoffDate || '', Validators.required],
         cutoffTime: [this.data?.cutoffTime || '', Validators.required],
-        status: [this.data?.status || 'Open'],
       },
       { validators: this.cutoffBeforeScheduleValidator },
     );

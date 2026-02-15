@@ -10,7 +10,7 @@
         <lucide-icon [img]="Building2" class="h-5 w-5 text-[#27619b]"></lucide-icon>
       </div>
       <div>
-        <p class="text-2xl font-extrabold">6</p>
+        <p class="text-2xl font-extrabold">{{ totalActivities }}</p>
         <p class="text-xs text-gray-500">Total Activities</p>
       </div>
     </mat-card>
@@ -20,7 +20,7 @@
         <lucide-icon [img]="Users" class="h-5 w-5 text-[#6a8caf]"></lucide-icon>
       </div>
       <div>
-        <p class="text-2xl font-extrabold">142</p>
+        <p class="text-2xl font-extrabold">{{ totalSlots }}</p>
         <p class="text-xs text-gray-500">Total Slots</p>
       </div>
     </mat-card>
@@ -30,7 +30,7 @@
         <lucide-icon [img]="UserCheck" class="h-5 w-5 text-[#36a17d]"></lucide-icon>
       </div>
       <div>
-        <p class="text-2xl font-extrabold">95</p>
+        <p class="text-2xl font-extrabold">{{ totalRegistered }}</p>
         <p class="text-xs text-gray-500">Registered</p>
       </div>
     </mat-card>
@@ -40,7 +40,7 @@
         <lucide-icon [img]="UserX" class="h-5 w-5 text-[#67737e]"></lucide-icon>
       </div>
       <div>
-        <p class="text-2xl font-extrabold">47</p>
+        <p class="text-2xl font-extrabold">{{ totalAvailable }}</p>
         <p class="text-xs text-gray-500">Available</p>
       </div>
     </mat-card>
