@@ -3,6 +3,8 @@ import { LoginPage } from './pages/login/login';
 import { AdminDashboardPage } from './pages/admin-dashboard/admin-dashboard';
 import { AdminActivitiesPage } from './pages/admin-activities/admin-activities';
 
+import { EmployeeDashboardPage } from './pages/employee-dashboard/employee-dashboard';
+
 export const routes: Routes = [
   { path: '', component: LoginPage },
   {
@@ -16,4 +18,16 @@ export const routes: Routes = [
       { path: 'qr-checkin', component: LoginPage }, // Replace with actual component
     ],
   },
+  {
+    path: 'employee-dashboard',
+    component: EmployeeDashboardPage,
+    children: [
+      { path: '', redirectTo: 'browse', pathMatch: 'full' },
+      { path: 'browse', component: LoginPage }, // Replace with actual component
+      { path: 'registration', component: LoginPage }, // Replace with actual component
+      { path: 'notifications', component: LoginPage }, // Replace with actual component
+      { path: 'qr-checkin', component: LoginPage }, // Replace with actual component
+    ],
+  },
+  { path: 'login', component: LoginPage },
 ];

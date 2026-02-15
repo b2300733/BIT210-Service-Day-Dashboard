@@ -17,69 +17,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { LucideAngularModule, Plus, Pencil, Trash2, Calendar, MapPin, Clock } from 'lucide-angular';
-
-export interface PeriodicElement {
-  name: string;
-  serviceType: string;
-  scheduleDate: string;
-  scheduleTime: string;
-  location: string;
-  registered: number;
-  totalSlots: number;
-  cutoffDate: string;
-  cutoffTime: string;
-  status: string;
-}
-const ELEMENT_DATA: PeriodicElement[] = [
-  {
-    name: 'Green Earth Foundation',
-    serviceType: 'Environment',
-    scheduleDate: '2026-03-15',
-    scheduleTime: '08:00',
-    location: 'Central Community Park',
-    registered: 10,
-    totalSlots: 25,
-    cutoffDate: '2026-03-12',
-    cutoffTime: '17:00',
-    status: 'Open',
-  },
-  {
-    name: 'Helping Hands Shelter',
-    serviceType: 'Social',
-    scheduleDate: '2026-03-20',
-    scheduleTime: '09:00',
-    location: 'Downtown Shelter',
-    registered: 4,
-    totalSlots: 17,
-    cutoffDate: '2026-03-18',
-    cutoffTime: '17:00',
-    status: 'Open',
-  },
-  {
-    name: 'Food for All Initiative',
-    serviceType: 'Hunger Relief',
-    scheduleDate: '2026-03-25',
-    scheduleTime: '10:00',
-    location: 'City Food Bank',
-    registered: 5,
-    totalSlots: 27,
-    cutoffDate: '2026-03-22',
-    cutoffTime: '17:00',
-    status: 'Closed',
-  },
-  {
-    name: 'Clean Water Project',
-    serviceType: 'Health',
-    scheduleDate: '2026-03-30',
-    scheduleTime: '11:00',
-    location: 'Riverside Community Center',
-    registered: 35,
-    totalSlots: 35,
-    cutoffDate: '2026-03-27',
-    cutoffTime: '17:00',
-    status: 'Full',
-  },
-];
+import { Activity, ACTIVITIES_DATA } from '../../data/activities.data';
 
 @Component({
   selector: 'app-admin-activities',
@@ -97,7 +35,7 @@ export class AdminActivitiesPage implements AfterViewInit {
 
   readonly dialog = inject(MatDialog);
 
-  openDelete(element: PeriodicElement) {
+  openDelete(element: Activity) {
     const dialogRef = this.dialog.open(DeleteActivitiesDialog, {
       data: element,
     });
@@ -111,7 +49,7 @@ export class AdminActivitiesPage implements AfterViewInit {
     });
   }
 
-  openAddEdit(element?: PeriodicElement) {
+  openAddEdit(element?: Activity) {
     const dialogRef = this.dialog.open(AddEditActivitiesDialog, {
       data: element,
     });
@@ -144,7 +82,7 @@ export class AdminActivitiesPage implements AfterViewInit {
     'status',
     'action',
   ];
-  dataSource = new MatTableDataSource(ELEMENT_DATA);
+  dataSource = new MatTableDataSource(ACTIVITIES_DATA);
 
   @ViewChild(MatSort) sort!: MatSort;
 
@@ -171,7 +109,7 @@ export class AdminActivitiesPage implements AfterViewInit {
   templateUrl: './delete-activities.html',
 })
 export class DeleteActivitiesDialog {
-  readonly element = inject<PeriodicElement>(MAT_DIALOG_DATA);
+  readonly element = inject<Activity>(MAT_DIALOG_DATA);
 }
 
 @Component({
@@ -190,7 +128,7 @@ export class DeleteActivitiesDialog {
 })
 export class AddEditActivitiesDialog {
   readonly fb = inject(FormBuilder);
-  readonly data = inject<PeriodicElement | undefined>(MAT_DIALOG_DATA, { optional: true });
+  readonly data = inject<Activity | undefined>(MAT_DIALOG_DATA, { optional: true });
   readonly dialogRef = inject(MatDialogRef<AddEditActivitiesDialog>);
 
   activityForm: FormGroup;
