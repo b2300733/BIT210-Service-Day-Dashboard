@@ -1,4 +1,15 @@
-import { Component, OnInit, ViewChild, ElementRef, AfterViewInit, inject } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  ViewChild,
+  ViewChildren,
+  QueryList,
+  ElementRef,
+  AfterViewInit,
+  inject,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatDatepickerModule } from '@angular/material/datepicker';
@@ -7,7 +18,19 @@ import { provideNativeDateAdapter } from '@angular/material/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { Chart, registerables } from 'chart.js';
 import { ActivitiesService } from '../../services/activities.service';
-import { REGISTRATION_TIMELINE_DATA } from '../../data/activities.data';
+import {
+  REGISTRATION_TIMELINE_DATA,
+  EMPLOYEE_REGISTRATIONS_DATA,
+  EmployeeRegistration,
+  Activity,
+  ACTIVITIES_DATA,
+} from '../../data/activities.data';
+import { MatExpansionModule, MatExpansionPanel } from '@angular/material/expansion';
+import { LiveAnnouncer } from '@angular/cdk/a11y';
+import { MatSort, Sort, MatSortModule } from '@angular/material/sort';
+import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { MatPaginator, MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { CommonModule } from '@angular/common';
 
 Chart.register(...registerables);
 
@@ -19,12 +42,36 @@ Chart.register(...registerables);
     MatDatepickerModule,
     MatInputModule,
     ReactiveFormsModule,
+    MatExpansionModule,
+    MatSortModule,
+    MatTableModule,
+    MatPaginatorModule,
+    CommonModule,
   ],
   providers: [provideNativeDateAdapter()],
   templateUrl: './admin-participation-monitor.html',
   styleUrl: './admin-participation-monitor.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdminParticipationMonitorPage implements AfterViewInit, OnInit {
+  readonly panelOpenState = signal(false);
+
+  activities: Activity[] = [];
+  allActivities: Activity[] = [];
+  activityDataSources = new Map<string, MatTableDataSource<EmployeeRegistration>>();
+  displayedColumns: string[] = ['employeeName', 'department', 'registeredDate'];
+  private allEmployeeRegistrations = EMPLOYEE_REGISTRATIONS_DATA;
+  private _liveAnnouncer = inject(LiveAnnouncer);
+
+  // Pagination
+  pageSize = 6;
+  pageIndex = 0;
+  totalActivities = 0;
+
+  @ViewChildren(MatSort) sorts!: QueryList<MatSort>;
+  @ViewChildren(MatExpansionPanel) expansionPanels!: QueryList<MatExpansionPanel>;
+  @ViewChild(MatPaginator) paginator!: MatPaginator;
+
   @ViewChild('timelineChart') timelineChartRef!: ElementRef<HTMLCanvasElement>;
   private timelineChart?: Chart;
   private activitiesService = inject(ActivitiesService);
@@ -37,6 +84,28 @@ export class AdminParticipationMonitorPage implements AfterViewInit, OnInit {
   private allTimelineData = REGISTRATION_TIMELINE_DATA;
 
   ngOnInit() {
+    // Get all activities from ACTIVITIES_DATA and sort by latest date
+    this.allActivities = [...ACTIVITIES_DATA].sort((a, b) => {
+      // Parse dates more explicitly to handle inconsistent formatting
+      const dateA = new Date(`${a.scheduleDate} ${a.scheduleTime}`);
+      const dateB = new Date(`${b.scheduleDate} ${b.scheduleTime}`);
+
+      // Latest first (descending order)
+      return dateB.getTime() - dateA.getTime();
+    });
+
+    this.totalActivities = this.allActivities.length;
+    this.updatePaginatedActivities();
+
+    // Create data sources for all activities
+    this.allActivities.forEach((activity, index) => {
+      const activityKey = `${activity.name}_${index}`; // Unique key for each activity instance
+      const registrations = this.allEmployeeRegistrations.filter(
+        (reg) => reg.activity === activity.name,
+      );
+      this.activityDataSources.set(activityKey, new MatTableDataSource(registrations));
+    });
+
     this.activitiesService.activities$.subscribe(() => {
       // Future: Update timeline when activities change
     });
@@ -60,10 +129,50 @@ export class AdminParticipationMonitorPage implements AfterViewInit, OnInit {
   }
 
   ngAfterViewInit() {
-    this.initTimelineChart();
+    // Delay chart initialization to ensure canvas is fully rendered
+    setTimeout(() => {
+      this.initTimelineChart();
+
+      this.assignSortsToDataSources();
+    });
+  }
+
+  private assignSortsToDataSources() {
+    const sortArray = this.sorts.toArray();
+    this.activities.forEach((activity, index) => {
+      const activityKey = `${activity.name}_${this.pageIndex * this.pageSize + index}`;
+      const dataSource = this.activityDataSources.get(activityKey);
+      if (dataSource && sortArray[index]) {
+        dataSource.sort = sortArray[index];
+      }
+    });
+  }
+
+  private updatePaginatedActivities() {
+    const startIndex = this.pageIndex * this.pageSize;
+    const endIndex = startIndex + this.pageSize;
+    this.activities = this.allActivities.slice(startIndex, endIndex);
+  }
+
+  onPageChange(event: PageEvent) {
+    // Close all expansion panels
+    this.expansionPanels?.forEach((panel) => panel.close());
+
+    this.pageIndex = event.pageIndex;
+    this.pageSize = event.pageSize;
+    this.updatePaginatedActivities();
+
+    // Re-assign sorts after pagination change
+    setTimeout(() => {
+      this.assignSortsToDataSources();
+    });
   }
 
   private initTimelineChart() {
+    if (!this.timelineChartRef?.nativeElement) {
+      return;
+    }
+
     const filteredData = this.getFilteredData();
     const labels = filteredData.map((d) => this.formatDate(d.date));
     const data = filteredData.map((d) => d.registrations);
@@ -185,6 +294,36 @@ export class AdminParticipationMonitorPage implements AfterViewInit, OnInit {
   private formatDate(date: string): string {
     const d = new Date(date);
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  }
+
+  getSlotPercentage(registered: number, totalSlots: number): number {
+    return (registered / totalSlots) * 100;
+  }
+
+  getRegistrationsForActivity(
+    activityName: string,
+    index: number,
+  ): MatTableDataSource<EmployeeRegistration> {
+    const activityKey = `${activityName}_${this.pageIndex * this.pageSize + index}`;
+    return (
+      this.activityDataSources.get(activityKey) || new MatTableDataSource<EmployeeRegistration>([])
+    );
+  }
+
+  announceSortChange(sortState: Sort) {
+    if (sortState.direction) {
+      this._liveAnnouncer.announce(`Sorted ${sortState.direction}ending`);
+    } else {
+      this._liveAnnouncer.announce('Sorting cleared');
+    }
+  }
+
+  getSlotsLeft(activity: Activity): number {
+    return activity.totalSlots - activity.registered;
+  }
+
+  getStatus(activity: Activity): string {
+    return this.activitiesService.getActivityStatus(activity);
   }
 
   ngOnDestroy() {

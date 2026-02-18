@@ -2,6 +2,7 @@ import { AfterViewInit, Component, ViewChild, inject, OnInit } from '@angular/co
 import { LiveAnnouncer } from '@angular/cdk/a11y';
 import { MatSort, Sort, MatSortModule } from '@angular/material/sort';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatCardModule } from '@angular/material/card';
 import {
   MatDialog,
@@ -22,7 +23,7 @@ import { ActivitiesService } from '../../services/activities.service';
 
 @Component({
   selector: 'app-admin-activities',
-  imports: [MatCardModule, MatTableModule, MatSortModule, LucideAngularModule],
+  imports: [MatCardModule, MatTableModule, MatSortModule, MatPaginatorModule, LucideAngularModule],
   templateUrl: './admin-activities.html',
   styleUrl: './admin-activities.css',
 })
@@ -81,6 +82,7 @@ export class AdminActivitiesPage implements AfterViewInit, OnInit {
   dataSource = new MatTableDataSource<Activity>([]);
 
   @ViewChild(MatSort) sort!: MatSort;
+  @ViewChild(MatPaginator) paginator!: MatPaginator;
 
   ngOnInit() {
     this.activitiesService.activities$.subscribe((activities) => {
@@ -90,6 +92,7 @@ export class AdminActivitiesPage implements AfterViewInit, OnInit {
 
   ngAfterViewInit() {
     this.dataSource.sort = this.sort;
+    this.dataSource.paginator = this.paginator;
   }
 
   announceSortChange(sortState: Sort) {
