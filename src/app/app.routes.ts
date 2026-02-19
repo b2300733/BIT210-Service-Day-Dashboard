@@ -5,6 +5,9 @@ import { AdminActivitiesPage } from './pages/admin-activities/admin-activities';
 import { AdminParticipationMonitorPage } from './pages/admin-participation-monitor/admin-participation-monitor';
 
 import { EmployeeDashboardPage } from './pages/employee-dashboard/employee-dashboard';
+import { EmployeeActivitiesComponent } from './pages/employee-activities/employee-activities';
+import { EmployeeRegistrationsComponent } from './pages/employee-registrations/employee-registrations';
+import { EmployeeNotificationsComponent } from './pages/employee-notifications/employee-notifications'; // Added import
 
 export const routes: Routes = [
   { path: '', component: LoginPage },
@@ -15,8 +18,8 @@ export const routes: Routes = [
       { path: '', redirectTo: 'activities', pathMatch: 'full' },
       { path: 'activities', component: AdminActivitiesPage },
       { path: 'participation', component: AdminParticipationMonitorPage },
-      { path: 'notifications', component: LoginPage }, // Replace with actual component
-      { path: 'qr-checkin', component: LoginPage }, // Replace with actual component
+      { path: 'notifications', component: LoginPage }, // Replace with actual component later
+      { path: 'qr-checkin', component: LoginPage }, // Replace with actual component later
     ],
   },
   {
@@ -24,10 +27,10 @@ export const routes: Routes = [
     component: EmployeeDashboardPage,
     children: [
       { path: '', redirectTo: 'browse', pathMatch: 'full' },
-      { path: 'browse', component: LoginPage }, // Replace with actual component
-      { path: 'registration', component: LoginPage }, // Replace with actual component
-      { path: 'notifications', component: LoginPage }, // Replace with actual component
-      { path: 'qr-checkin', component: LoginPage }, // Replace with actual component
+      { path: 'browse', component: EmployeeActivitiesComponent }, 
+      { path: 'registration', component: EmployeeRegistrationsComponent }, 
+      { path: 'notifications', component: EmployeeNotificationsComponent }, // Replaced placeholder
+      { path: 'qr-checkin', component: LoginPage }, // Replace with actual component later
     ],
   },
   { path: 'login', component: LoginPage },
