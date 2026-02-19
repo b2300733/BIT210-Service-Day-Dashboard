@@ -1,0 +1,97 @@
+<div class="space-y-6 p-4">
+
+  <input
+    type="text"
+    [(ngModel)]="searchTerm"
+    placeholder="Search activities..."
+    class="w-full rounded-lg border px-4 py-2"
+  />
+
+  <div class="flex items-center justify-between">
+    <h2 class="text-lg font-bold">Available Activities</h2>
+  </div>
+
+  <div class="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+    <mat-card *ngFor="let activity of filteredActivities"
+      class="bg-white p-6 rounded-xl flex flex-col justify-between min-h-[420px] transition-all"
+      [ngClass]="activity.registered ? '!border-2 !border-[#309267] shadow-sm' : '!border border-gray-200 shadow-sm'">
+      
+      <div class="flex-grow">
+        <div class="flex items-start justify-between mb-2 gap-2">
+          <h3 class="font-bold text-[17px] leading-tight">{{ activity.title }}</h3>
+          
+          <div *ngIf="activity.registered" 
+               class="flex items-center gap-1 bg-[#eaf6f0] text-[#309267] text-xs px-2.5 py-1 rounded-full font-medium whitespace-nowrap">
+            <lucide-icon [img]="CheckCircle" class="w-3.5 h-3.5"></lucide-icon>
+            Registered
+          </div>
+        </div>
+
+        <div class="mb-5">
+  <span class="bg-slate-200 text-slate-800 text-xs px-3 py-1 rounded-full font-medium">
+    {{ activity.category }}
+  </span>
+</div>
+
+        <p class="text-[14px] text-gray-500 mb-6 leading-relaxed">
+          {{ activity.description }}
+        </p>
+
+        <div class="space-y-2.5 text-sm text-gray-500 mb-6">
+          <div class="flex items-center gap-2.5">
+            <lucide-icon [img]="Calendar" class="w-[18px] h-[18px] text-gray-400"></lucide-icon>
+            {{ activity.date }}
+          </div>
+          <div class="flex items-center gap-2.5">
+            <lucide-icon [img]="Clock" class="w-[18px] h-[18px] text-gray-400"></lucide-icon>
+            {{ activity.time }}
+          </div>
+          <div class="flex items-center gap-2.5">
+            <lucide-icon [img]="MapPin" class="w-[18px] h-[18px] text-gray-400"></lucide-icon>
+            {{ activity.location }}
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-4">
+        <div class="mb-1">
+          <div class="flex items-center justify-between text-sm mb-2 text-gray-500">
+            <div class="flex items-center gap-2.5">
+              <lucide-icon [img]="Users" class="w-[18px] h-[18px] text-gray-400"></lucide-icon>
+              Slots
+            </div>
+            <div class="font-bold text-black">{{ activity.slotsFilled }}/{{ activity.slotsTotal }}</div>
+          </div>
+          
+          <div class="w-full bg-gray-100 rounded-full h-2">
+            <div class="bg-[#205b9b] h-2 rounded-full transition-all duration-300" 
+                 [style.width.%]="(activity.slotsFilled / activity.slotsTotal) * 100">
+            </div>
+          </div>
+        </div>
+
+        <div class="text-xs text-gray-500 mb-5">
+          Cutoff: {{ activity.cutoff }}
+        </div>
+
+        <button *ngIf="activity.registered"
+          class="w-full py-2 border border-gray-300 rounded-lg text-sm font-medium transition-colors hover:bg-red-600 hover:text-white hover:border-red-600"
+          (click)="cancelRegistration(activity)">
+          Cancel Registration
+        </button>
+        
+        <button *ngIf="!activity.registered && activity.slotsFilled >= activity.slotsTotal"
+          class="w-full py-2 bg-[#8ba4c5] text-white rounded-lg text-sm font-medium cursor-not-allowed">
+          No Slots Available
+        </button>
+
+        <button *ngIf="!activity.registered && activity.slotsFilled < activity.slotsTotal"
+          class="w-full py-2 bg-[#205b9b] hover:bg-blue-800 text-white rounded-lg text-sm font-medium transition-colors"
+          (click)="register(activity)">
+          Register
+        </button>
+      </div>
+
+    </mat-card>
+  </div>
+</div>
