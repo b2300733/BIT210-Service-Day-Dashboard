@@ -1,0 +1,59 @@
+<div class="flex flex-col gap-4">
+  
+  <div *ngIf="registrations.length === 0" class="p-8 text-center text-gray-500 bg-white border border-gray-200 rounded-lg shadow-sm">
+    <p>You have no confirmed registrations.</p>
+  </div>
+
+  <div *ngFor="let registration of registrations" 
+       class="rounded-lg border border-gray-200 bg-white shadow-sm transition-all hover:shadow-md">
+    
+    <div class="flex flex-col space-y-1.5 p-6 pb-3">
+      <div class="flex items-start justify-between">
+        <div>
+          <div class="font-semibold tracking-tight text-base text-gray-900">
+            {{ registration.title }}
+          </div>
+          <div class="inline-flex items-center rounded-full bg-slate-200 px-2.5 py-0.5 text-xs font-semibold text-slate-800 mt-1">
+            {{ registration.category }}
+          </div>
+        </div>
+        <div class="inline-flex items-center rounded-full bg-[#309267] px-2.5 py-0.5 text-xs font-semibold text-white">
+          {{ registration.status }}
+        </div>
+      </div>
+    </div>
+
+    <div class="p-6 pt-0">
+      <p class="mb-4 text-sm leading-relaxed text-gray-500">
+        {{ registration.description }}
+      </p>
+      
+      <div class="mb-5 flex flex-col gap-2 text-sm text-gray-500">
+        <div class="flex items-center gap-2">
+          <lucide-icon [img]="Calendar" class="h-4 w-4 text-gray-400"></lucide-icon>
+          <span>{{ registration.date }}</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <lucide-icon [img]="Clock" class="h-4 w-4 text-gray-400"></lucide-icon>
+          <span>{{ registration.time }}</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <lucide-icon [img]="MapPin" class="h-4 w-4 text-gray-400"></lucide-icon>
+          <span>{{ registration.location }}</span>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between border-t border-[#205b9b] pt-4">
+        <p class="text-xs text-gray-400 font-medium">
+          Registered: {{ registration.registeredOn }}
+        </p>
+        <button 
+          (click)="cancelRegistration(registration.id)"
+          class="inline-flex h-9 items-center justify-center rounded-md border border-gray-300 bg-transparent px-4 py-2 text-sm font-medium transition-colors hover:bg-red-600 hover:text-white hover:border-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500">
+          Cancel Registration
+        </button>
+      </div>
+    </div>
+    
+  </div>
+</div>
