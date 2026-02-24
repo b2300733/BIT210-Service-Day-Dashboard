@@ -4,11 +4,13 @@ import { RouterOutlet } from '@angular/router';
 import { LucideAngularModule, Heart, CalendarCheck, Search, Bell } from 'lucide-angular';
 import { EmployeeNavbarComponent } from '../../components/employee-navbar/employee-navbar';
 import { NotificationService } from '../../pages/employee-notifications/notification.service';
+import { HeaderComponent } from '../../components/header/header'; 
+
 
 @Component({
   selector: 'app-employee-dashboard',
   standalone: true,
-  imports: [EmployeeNavbarComponent, MatCardModule, RouterOutlet, LucideAngularModule],
+  imports: [EmployeeNavbarComponent, MatCardModule, RouterOutlet, LucideAngularModule, HeaderComponent],
   templateUrl: './employee-dashboard.html',
   styleUrl: './employee-dashboard.css',
 })
