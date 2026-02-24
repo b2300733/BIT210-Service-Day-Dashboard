@@ -19,8 +19,8 @@
 
   <mat-card class="bg-white! p-7">
     <div class="pb-7 text-lg font-bold">Activity Breakdown</div>
-    <mat-accordion>
       @for (activity of activities; track $index) {
+    <mat-accordion class="mb-4">
         <mat-expansion-panel class="bg-white!">
           <mat-expansion-panel-header class="py-12!">
             <mat-panel-title class="flex w-full flex-col gap-3">
@@ -124,8 +124,8 @@
             </div>
           }
         </mat-expansion-panel>
-      }
     </mat-accordion>
+      }
     <mat-paginator
       class="bg-white!"
       [length]="totalActivities"
