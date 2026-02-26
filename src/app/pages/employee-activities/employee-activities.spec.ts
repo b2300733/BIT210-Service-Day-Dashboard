@@ -18,4 +18,14 @@ describe('EmployeeActivitiesComponent', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
   });
+
+  it('should open and close details modal', () => {
+    const activity = component.activities[0];
+    
+    component.openDetails(activity);
+    expect(component.selectedActivity).toBe(activity);
+
+    component.closeDetails();
+    expect(component.selectedActivity).toBeNull();
+  });
 });
