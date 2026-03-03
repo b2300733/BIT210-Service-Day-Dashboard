@@ -4,10 +4,17 @@ import { RouterOutlet } from '@angular/router';
 import { LucideAngularModule, Building2, Users, UserCheck, UserX } from 'lucide-angular';
 import { AdminNavbarComponent } from '../../components/admin-navbar/admin-navbar';
 import { ActivitiesService } from '../../services/activities.service';
+import { HeaderComponent } from '../../components/header/header';
 
 @Component({
   selector: 'app-admin-dashboard',
-  imports: [LucideAngularModule, MatCardModule, AdminNavbarComponent, RouterOutlet],
+  imports: [
+    LucideAngularModule,
+    MatCardModule,
+    AdminNavbarComponent,
+    RouterOutlet,
+    HeaderComponent,
+  ],
   templateUrl: './admin-dashboard.html',
   styleUrl: './admin-dashboard.css',
 })
