@@ -29,15 +29,16 @@
 
     <div class="p-6 pt-0">
       <div class="flex flex-col gap-4">
+        @if (filteredActivities.length === 0) {
         <div
-          *ngIf="filteredActivities.length === 0"
           class="rounded-lg border border-dashed border-gray-200 py-8 text-center text-sm text-gray-500"
         >
           No activities found matching your search.
         </div>
+        }
 
+        @for (activity of filteredActivities; track activity.title) {
         <div
-          *ngFor="let activity of filteredActivities"
           class="flex flex-col gap-3 rounded-lg border bg-white p-5 transition-colors"
           [ngClass]="activity.isCheckedIn ? 'border-green-200 bg-green-50/30' : 'border-gray-200'"
         >
@@ -45,13 +46,14 @@
             <div>
               <div class="flex items-center gap-2">
                 <p class="font-medium text-gray-900">{{ activity.title }}</p>
+                @if (activity.isCheckedIn) {
                 <div
-                  *ngIf="activity.isCheckedIn"
                   class="text-green inline-flex items-center gap-1 rounded-full border border-transparent bg-[#eaf6f0] px-2.5 py-0.5 text-xs font-semibold"
                 >
                   <lucide-icon [img]="CheckCircle" class="h-3 w-3"></lucide-icon>
                   Checked In
                 </div>
+                }
               </div>
 
               <div class="mt-1 flex flex-wrap items-center gap-3 text-xs text-gray-500">
@@ -69,13 +71,15 @@
                 </span>
               </div>
 
-              <p *ngIf="activity.isCheckedIn" class="text-green mt-2 text-xs font-medium">
+              @if (activity.isCheckedIn) {
+              <p class="text-green mt-2 text-xs font-medium">
                 Arrived at: {{ activity.checkInTime }}
               </p>
+              }
             </div>
 
+            @if (!activity.isCheckedIn) {
             <button
-              *ngIf="!activity.isCheckedIn"
               (click)="toggleQr(activity)"
               [ngClass]="
                 activity.showQr
@@ -87,10 +91,11 @@
               <lucide-icon [img]="QrCode" class="h-4 w-4"></lucide-icon>
               {{ activity.showQr ? 'Hide QR' : 'View QR' }}
             </button>
+            }
           </div>
 
+          @if (activity.showQr && !activity.isCheckedIn) {
           <div
-            *ngIf="activity.showQr && !activity.isCheckedIn"
             class="animate-in fade-in slide-in-from-top-2 mt-3 flex flex-col items-center justify-center border-t border-gray-100 pt-4"
           >
             <p class="mb-3 text-sm text-gray-500">Present this code to the event coordinator</p>
@@ -115,28 +120,31 @@
               </button>
             </div>
           </div>
+          }
         </div>
+        }
       </div>
     </div>
   </div>
 
+  @if (enlargedQrActivity) {
   <div
-    *ngIf="enlargedQrActivity"
     class="animate-in fade-in zoom-in-95 fixed inset-0 z-100 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm duration-200"
   >
     <div
       class="relative flex min-h-112.5 w-full max-w-sm flex-col items-center justify-center overflow-hidden rounded-2xl bg-white p-6 shadow-2xl transition-all duration-500"
     >
+      @if (!isScanSuccessful()) {
       <button
-        *ngIf="!isScanSuccessful()"
         (click)="closeEnlargedQr()"
         class="absolute top-4 right-4 z-10 rounded-full p-1.5 text-gray-500 transition-colors hover:bg-gray-100"
       >
         <lucide-icon [img]="X" class="h-5 w-5"></lucide-icon>
       </button>
+      }
 
+      @if (!isScanSuccessful()) {
       <div
-        *ngIf="!isScanSuccessful()"
         class="animate-in fade-in flex w-full flex-col items-center duration-300"
       >
         <h3 class="mb-1 pr-6 pl-6 text-center text-lg font-bold text-gray-900">
@@ -171,8 +179,10 @@
           Download as JPG
         </button>
       </div>
+      }
 
-      <div *ngIf="isScanSuccessful()" class="flex w-full flex-col items-center justify-center py-4">
+      @if (isScanSuccessful()) {
+      <div class="flex w-full flex-col items-center justify-center py-4">
         <div
           class="animate-scale-pop mb-6 flex h-28 w-28 items-center justify-center rounded-full bg-[#eaf6f0] shadow-[0_0_0_8px_rgba(48,146,103,0.1)]"
         >
@@ -196,6 +206,8 @@
           </button>
         </div>
       </div>
+      }
     </div>
   </div>
+  }
 </div>

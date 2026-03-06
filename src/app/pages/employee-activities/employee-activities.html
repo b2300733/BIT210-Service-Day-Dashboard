@@ -11,8 +11,8 @@
   </div>
 
   <div class="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+    @for (activity of filteredActivities; track activity.title) {
     <mat-card
-      *ngFor="let activity of filteredActivities"
       (click)="openDetails(activity)"
       class="flex min-h-105 cursor-pointer flex-col justify-between rounded-xl !bg-white p-6 transition-all duration-200 ease-in hover:-translate-y-1 hover:shadow-lg"
       [ngClass]="
@@ -27,13 +27,14 @@
             {{ activity.title }}
           </h3>
 
+          @if (activity.registered) {
           <div
-            *ngIf="activity.registered"
             class="text-green flex h-full items-center gap-1 rounded-full bg-[#eaf6f0] px-2.5 py-1 text-xs font-medium whitespace-nowrap"
           >
             <lucide-icon [img]="CheckCircle" class="h-3.5 w-3.5"></lucide-icon>
             Registered
           </div>
+          }
         </div>
 
         <div class="mb-5">
@@ -84,35 +85,39 @@
 
         <div class="mb-5 text-xs text-gray-500">Cutoff: {{ activity.cutoff }}</div>
 
+        @if (activity.registered) {
         <button
-          *ngIf="activity.registered"
           class="hover:bg-red hover:border-red w-full cursor-pointer rounded-lg border border-gray-200 py-2 text-sm font-medium transition-colors hover:text-white"
           (click)="$event.stopPropagation(); cancelRegistration(activity)"
         >
           Cancel Registration
         </button>
+        }
 
+        @if (!activity.registered && activity.slotsFilled >= activity.slotsTotal) {
         <button
-          *ngIf="!activity.registered && activity.slotsFilled >= activity.slotsTotal"
           (click)="$event.stopPropagation()"
           class="w-full cursor-not-allowed rounded-lg border border-[#8ba4c5] bg-[#8ba4c5] py-2 text-sm font-medium text-white"
         >
           No Slots Available
         </button>
+        }
 
+        @if (!activity.registered && activity.slotsFilled < activity.slotsTotal) {
         <button
-          *ngIf="!activity.registered && activity.slotsFilled < activity.slotsTotal"
           class="bg-primary hover:bg-primary/90 border-primary w-full cursor-pointer rounded-lg border py-2 text-sm font-medium text-white transition-colors"
           (click)="$event.stopPropagation(); register(activity)"
         >
           Register
         </button>
+        }
       </div>
     </mat-card>
+    }
   </div>
 
+  @if (selectedActivity) {
   <div
-    *ngIf="selectedActivity"
     class="animate-in fade-in fixed inset-0 z-100 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm duration-200 sm:p-6"
   >
     <div
@@ -140,13 +145,14 @@
       </div>
 
       <div class="flex-1 overflow-y-auto p-6">
+        @if (selectedActivity.registered) {
         <div
-          *ngIf="selectedActivity.registered"
           class="text-green mb-6 inline-flex w-full items-center gap-2 rounded-lg border border-[#b8e3cc] bg-[#eaf6f0] px-4 py-2 text-sm font-semibold sm:w-auto"
         >
           <lucide-icon [img]="CheckCircle" class="h-5 w-5"></lucide-icon>
           You are registered for this activity!
         </div>
+        }
 
         <h3 class="mb-2 text-sm font-bold tracking-wider text-gray-900 uppercase">
           About this Activity
@@ -217,35 +223,39 @@
       </div>
 
       <div class="sticky bottom-0 z-10 border-t border-gray-100 bg-gray-50 p-6">
+        @if (selectedActivity.registered) {
         <button
-          *ngIf="selectedActivity.registered"
           class="border-red hover:bg-red text-red w-full cursor-pointer rounded-xl border-2 bg-white py-3 text-base font-semibold transition-colors hover:text-white"
           (click)="cancelRegistration(selectedActivity)"
         >
           Cancel My Registration
         </button>
+        }
 
+        @if (
+          !selectedActivity.registered &&
+          selectedActivity.slotsFilled >= selectedActivity.slotsTotal
+        ) {
         <button
-          *ngIf="
-            !selectedActivity.registered &&
-            selectedActivity.slotsFilled >= selectedActivity.slotsTotal
-          "
           class="w-full cursor-not-allowed rounded-xl bg-[#8ba4c5] py-3 text-base font-semibold text-white shadow-sm"
         >
           Event is Full
         </button>
+        }
 
+        @if (
+          !selectedActivity.registered &&
+          selectedActivity.slotsFilled < selectedActivity.slotsTotal
+        ) {
         <button
-          *ngIf="
-            !selectedActivity.registered &&
-            selectedActivity.slotsFilled < selectedActivity.slotsTotal
-          "
           class="bg-primary w-full rounded-xl py-3 text-base font-semibold text-white shadow-md transition-colors hover:bg-blue-800 hover:shadow-lg"
           (click)="register(selectedActivity)"
         >
           Confirm Registration
         </button>
+        }
       </div>
     </div>
   </div>
+  }
 </div>

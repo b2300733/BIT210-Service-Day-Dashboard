@@ -1,13 +1,14 @@
 <div class="flex flex-col gap-4">
-  <div
-    *ngIf="registrations.length === 0"
-    class="rounded-lg border border-gray-200 bg-white p-8 text-center text-gray-500 shadow-sm"
-  >
-    <p>You have no confirmed registrations.</p>
-  </div>
+  @if (registrations.length === 0) {
+    <div
+      class="rounded-lg border border-gray-200 bg-white p-8 text-center text-gray-500 shadow-sm"
+    >
+      <p>You have no confirmed registrations.</p>
+    </div>
+  }
 
+  @for (registration of registrations; track registration.id) {
   <div
-    *ngFor="let registration of registrations"
     class="rounded-lg border border-gray-200 bg-white shadow-sm transition-all hover:shadow-md"
   >
     <div class="flex flex-col space-y-1.5 p-6 pb-3">
@@ -61,4 +62,5 @@
       </div>
     </div>
   </div>
+  }
 </div>
