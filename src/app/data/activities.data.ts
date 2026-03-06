@@ -8,6 +8,7 @@ export interface Activity {
   totalSlots: number;
   cutoffDate: string;
   cutoffTime: string;
+  description?: string;
 }
 
 export interface RegistrationTimeline {
@@ -17,6 +18,7 @@ export interface RegistrationTimeline {
 
 export interface EmployeeRegistration {
   employeeName: string;
+  email: string;
   department: string;
   activity: string;
   registeredDate: string;
@@ -26,6 +28,7 @@ export interface EmployeeRegistration {
 export const EMPLOYEE_REGISTRATIONS_DATA: EmployeeRegistration[] = [
   {
     employeeName: 'Sarah Johnson',
+    email: 'sarah.johnson@example.com',
     department: 'Marketing',
     activity: 'Green Earth Foundation',
     registeredDate: '2026-02-01',
@@ -33,126 +36,144 @@ export const EMPLOYEE_REGISTRATIONS_DATA: EmployeeRegistration[] = [
   },
   {
     employeeName: 'Michael Chen',
-    department: 'IT',
+    email: 'michael.chen@example.com',
+    department: 'Sales',
     activity: 'Green Earth Foundation',
     registeredDate: '2026-02-01',
     registeredTime: '10:30',
   },
   {
     employeeName: 'Emily Rodriguez',
-    department: 'Human Resources',
+    email: 'emily.rodriguez@example.com',
+    department: 'Engineering',
     activity: 'Green Earth Foundation',
     registeredDate: '2026-02-02',
     registeredTime: '14:20',
   },
   {
     employeeName: 'David Park',
-    department: 'Finance',
+    email: 'david.park@example.com',
+    department: 'Product',
     activity: 'Green Earth Foundation',
     registeredDate: '2026-02-03',
     registeredTime: '11:45',
   },
   {
     employeeName: 'Jessica Williams',
-    department: 'Sales',
+    email: 'jessica.williams@example.com',
+    department: 'Design',
     activity: 'Green Earth Foundation',
     registeredDate: '2026-02-04',
     registeredTime: '08:30',
   },
   {
     employeeName: 'Robert Taylor',
-    department: 'Operations',
+    email: 'robert.taylor@example.com',
+    department: 'HR',
     activity: 'Green Earth Foundation',
     registeredDate: '2026-02-05',
     registeredTime: '13:10',
   },
   {
     employeeName: 'Amanda Lee',
-    department: 'Marketing',
+    email: 'amanda.lee@example.com',
+    department: 'Finance',
     activity: 'Green Earth Foundation',
     registeredDate: '2026-02-06',
     registeredTime: '09:50',
   },
   {
     employeeName: 'Christopher Brown',
-    department: 'IT',
+    email: 'christopher.brown@example.com',
+    department: 'Operations',
     activity: 'Green Earth Foundation',
     registeredDate: '2026-02-07',
     registeredTime: '16:25',
   },
   {
     employeeName: 'Michelle Davis',
-    department: 'Customer Service',
+    email: 'michelle.davis@example.com',
+    department: 'Legal',
     activity: 'Green Earth Foundation',
     registeredDate: '2026-02-10',
     registeredTime: '10:15',
   },
   {
     employeeName: 'Jason Martinez',
-    department: 'Engineering',
+    email: 'jason.martinez@example.com',
+    department: 'Customer Support',
     activity: 'Green Earth Foundation',
     registeredDate: '2026-02-11',
     registeredTime: '15:40',
   },
   {
     employeeName: 'Lisa Anderson',
-    department: 'Human Resources',
+    email: 'lisa.anderson@example.com',
+    department: 'IT',
     activity: 'Helping Hands Shelter',
     registeredDate: '2026-02-02',
     registeredTime: '11:20',
   },
   {
     employeeName: 'Kevin Wong',
-    department: 'Finance',
+    email: 'kevin.wong@example.com',
+    department: 'Marketing',
     activity: 'Helping Hands Shelter',
     registeredDate: '2026-02-05',
     registeredTime: '14:35',
   },
   {
     employeeName: 'Rachel Thompson',
-    department: 'Marketing',
+    email: 'rachel.thompson@example.com',
+    department: 'Sales',
     activity: 'Helping Hands Shelter',
     registeredDate: '2026-02-08',
     registeredTime: '09:00',
   },
   {
     employeeName: 'Daniel Garcia',
-    department: 'Sales',
+    email: 'daniel.garcia@example.com',
+    department: 'Engineering',
     activity: 'Helping Hands Shelter',
     registeredDate: '2026-02-12',
     registeredTime: '13:45',
   },
   {
     employeeName: 'Stephanie Kim',
-    department: 'Operations',
+    email: 'stephanie.kim@example.com',
+    department: 'Product',
     activity: 'Food for All Initiative',
     registeredDate: '2026-02-03',
     registeredTime: '10:25',
   },
   {
     employeeName: 'Brian Miller',
-    department: 'IT',
+    email: 'brian.miller@example.com',
+    department: 'Design',
     activity: 'Food for All Initiative',
     registeredDate: '2026-02-06',
     registeredTime: '15:10',
   },
   {
     employeeName: 'Nicole Harris',
-    department: 'Customer Service',
+    email: 'nicole.harris@example.com',
+    department: 'HR',
     activity: 'Food for All Initiative',
     registeredDate: '2026-02-09',
     registeredTime: '11:30',
   },
   {
     employeeName: 'Thomas Clark',
-    department: 'Engineering',
+    email: 'thomas.clark@example.com',
+    department: 'Finance',
     activity: 'Food for All Initiative',
     registeredDate: '2026-02-13',
     registeredTime: '14:00',
   },
   {
     employeeName: 'Jennifer Lewis',
-    department: 'Human Resources',
+    email: 'jennifer.lewis@example.com',
+    department: 'Operations',
     activity: 'Food for All Initiative',
     registeredDate: '2026-02-15',
     registeredTime: '09:45',

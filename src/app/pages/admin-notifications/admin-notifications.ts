@@ -1,18 +1,17 @@
-import { AfterViewInit, Component, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { LiveAnnouncer } from '@angular/cdk/a11y';
-import { inject } from '@angular/core';
 import { MatSort, Sort, MatSortModule } from '@angular/material/sort';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
-import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { LucideAngularModule, Send, CalendarClock, Clock, CircleCheck } from 'lucide-angular';
+import { Send, CalendarClock, Clock, CircleCheck } from 'lucide-angular';
 import { MatDialogActions } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ACTIVITIES_DATA } from '../../data/activities.data';
+import { COMMON_PAGES_MODULES } from '../../module/common.pages.module';
 
 export interface ScheduledReminder {
   activity: string;
@@ -25,8 +24,7 @@ export interface ScheduledReminder {
   selector: 'app-admin-notifications',
   imports: [
     CommonModule,
-    MatCardModule,
-    LucideAngularModule,
+    COMMON_PAGES_MODULES,
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,

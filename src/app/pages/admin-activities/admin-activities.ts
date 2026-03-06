@@ -3,7 +3,6 @@ import { LiveAnnouncer } from '@angular/cdk/a11y';
 import { MatSort, Sort, MatSortModule } from '@angular/material/sort';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
-import { MatCardModule } from '@angular/material/card';
 import {
   MatDialog,
   MatDialogActions,
@@ -17,13 +16,14 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { LucideAngularModule, Plus, Pencil, Trash2, Calendar, MapPin, Clock } from 'lucide-angular';
+import { Plus, Pencil, Trash2, Calendar, MapPin, Clock } from 'lucide-angular';
 import { Activity } from '../../data/activities.data';
 import { ActivitiesService } from '../../services/activities.service';
+import { COMMON_PAGES_MODULES } from '../../module/common.pages.module';
 
 @Component({
   selector: 'app-admin-activities',
-  imports: [MatCardModule, MatTableModule, MatSortModule, MatPaginatorModule, LucideAngularModule],
+  imports: [MatTableModule, MatSortModule, MatPaginatorModule, COMMON_PAGES_MODULES],
   templateUrl: './admin-activities.html',
   styleUrl: './admin-activities.css',
 })
@@ -91,6 +91,16 @@ export class AdminActivitiesPage implements AfterViewInit, OnInit {
   }
 
   ngAfterViewInit() {
+    this.dataSource.sortingDataAccessor = (item: Activity, column: string) => {
+      switch (column) {
+        case 'slots':
+          return item.registered;
+        case 'status':
+          return this.activitiesService.getActivityStatus(item);
+        default:
+          return (item as any)[column] ?? '';
+      }
+    };
     this.dataSource.sort = this.sort;
     this.dataSource.paginator = this.paginator;
   }
@@ -157,6 +167,7 @@ export class AddEditActivitiesDialog {
         totalSlots: [this.data?.totalSlots || 0, [Validators.required, Validators.min(1)]],
         cutoffDate: [this.data?.cutoffDate || '', Validators.required],
         cutoffTime: [this.data?.cutoffTime || '', Validators.required],
+        description: [this.data?.description || '', Validators.required],
       },
       { validators: this.cutoffBeforeScheduleValidator },
     );
