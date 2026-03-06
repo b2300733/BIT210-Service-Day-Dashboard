@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { LiveAnnouncer } from '@angular/cdk/a11y';
 import { inject } from '@angular/core';
 import { MatSort, Sort, MatSortModule } from '@angular/material/sort';
@@ -11,6 +11,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { LucideAngularModule, Send, CalendarClock, Clock, CircleCheck } from 'lucide-angular';
 import { MatDialogActions } from '@angular/material/dialog';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { ACTIVITIES_DATA } from '../../data/activities.data';
 
 export interface ScheduledReminder {
@@ -44,6 +45,7 @@ export class AdminNotificationsPage implements AfterViewInit {
   readonly CircleCheck = CircleCheck;
 
   private _liveAnnouncer = inject(LiveAnnouncer);
+  private _snackBar = inject(MatSnackBar);
 
   broadcastForm: FormGroup;
   scheduleForm: FormGroup;
@@ -83,8 +85,8 @@ export class AdminNotificationsPage implements AfterViewInit {
 
   constructor(private fb: FormBuilder) {
     this.broadcastForm = this.fb.group({
-      title: [''],
-      message: [''],
+      title: ['', Validators.required],
+      message: ['', Validators.required],
     });
     this.scheduleForm = this.fb.group({
       activity: [''],
@@ -120,8 +122,26 @@ export class AdminNotificationsPage implements AfterViewInit {
     this.scheduleForm.patchValue({ activity: '' });
   }
 
+  sendBroadcast(): void {
+    if (this.broadcastForm.invalid) return;
+    const { title, message } = this.broadcastForm.value;
+    this._snackBar.open(`Broadcast "${title}" sent successfully!`, '', {
+      duration: 4000,
+      horizontalPosition: 'end',
+      verticalPosition: 'top',
+      panelClass: ['snackbar-error'],
+    });
+    this.broadcastForm.reset();
+  }
+
   sendNow(reminder: ScheduledReminder): void {
     reminder.status = 'sent';
     this.dataSource.data = [...this.dataSource.data];
+    this._snackBar.open(`Reminder for "${reminder.activity}" activity sent!`, '', {
+      duration: 4000,
+      horizontalPosition: 'end',
+      verticalPosition: 'top',
+      panelClass: ['snackbar-error'],
+    });
   }
 }
