@@ -5,7 +5,9 @@
         <lucide-icon [img]="Heart" class="h-5 w-5"></lucide-icon>
         <span class="text-lg font-extrabold tracking-tight">Service Day</span>
       </div>
-      <!-- <span class="rounded-full bg-orange-200 px-2.5 py-0.5 text-xs font-semibold">Admin</span> -->
+      @if (authService.currentUser()?.role === 'admin') {
+        <span class="rounded-full bg-orange-200 px-2.5 py-0.5 text-xs font-semibold">Admin</span>
+      }
     </div>
 
     <div class="flex items-center gap-2 text-sm">
@@ -106,14 +108,14 @@
       </div> -->
 
       <div class="z-10 hidden text-right sm:block">
-        <p class="font-medium text-gray-900">John Doe</p>
-        <p class="text-xs text-gray-500">Engineering</p>
+        <p class="font-medium text-gray-900">{{ authService.currentUser()?.name }}</p>
+        <p class="text-xs text-gray-500">{{ authService.currentUser()?.department }}</p>
       </div>
 
       <button
         type="button"
         class="z-10 inline-flex h-9 cursor-pointer items-center justify-center gap-2 rounded-md px-3 text-gray-600 transition-colors hover:bg-gray-100"
-        routerLink="/login"
+        (click)="signOut()"
       >
         <lucide-icon [img]="LogOut" class="h-4 w-4"></lucide-icon>
         <span class="hidden sm:inline">Sign Out</span>

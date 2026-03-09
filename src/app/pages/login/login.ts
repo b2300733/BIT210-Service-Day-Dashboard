@@ -1,10 +1,42 @@
 import { Component } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
+import { MatCardModule } from '@angular/material/card';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { Heart, LucideAngularModule } from 'lucide-angular';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-login',
-  imports: [RouterLink],
+  imports: [FormsModule, LucideAngularModule, MatCardModule, MatFormFieldModule, MatInputModule],
   templateUrl: './login.html',
   styleUrl: './login.css',
 })
-export class LoginPage {}
+export class LoginPage {
+  readonly Heart = Heart;
+
+  email = '';
+  password = '';
+  error = '';
+
+  constructor(
+    private router: Router,
+    private authService: AuthService,
+  ) {}
+
+  signIn() {
+    this.error = '';
+    const success = this.authService.login(this.email, this.password);
+    if (!success) {
+      this.error = 'Invalid credentials. Please try again.';
+      return;
+    }
+    const user = this.authService.currentUser();
+    if (user?.role === 'admin') {
+      this.router.navigate(['/admin-dashboard']);
+    } else {
+      this.router.navigate(['/employee-dashboard']);
+    }
+  }
+}
