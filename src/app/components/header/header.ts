@@ -10,10 +10,6 @@ import {
   Megaphone,
   Check,
 } from 'lucide-angular';
-import {
-  NotificationService,
-  Notification,
-} from '../../pages/employee-notifications/notification.service';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
@@ -22,7 +18,7 @@ import { AuthService } from '../../services/auth.service';
   imports: [CommonModule, LucideAngularModule],
   templateUrl: './header.html',
 })
-export class HeaderComponent implements OnInit {
+export class HeaderComponent {
   readonly Heart = Heart;
   readonly Bell = Bell;
   readonly LogOut = LogOut;
@@ -36,19 +32,8 @@ export class HeaderComponent implements OnInit {
 
   constructor(
     private router: Router,
-    private notificationService: NotificationService,
     public authService: AuthService,
   ) {}
-
-  ngOnInit() {
-    this.notificationService.unreadCount$.subscribe((count) => (this.unreadCount = count));
-    this.notificationService.notifications$.subscribe((data) => (this.notifications = data));
-  }
-
-  markAllRead() {
-    this.notificationService.markAllRead();
-    this.isDropdownOpen = false;
-  }
 
   signOut() {
     this.authService.logout();

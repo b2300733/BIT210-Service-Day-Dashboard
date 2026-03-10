@@ -46,9 +46,7 @@
       Scheduled Reminders
     </div>
 
-    <!-- Controls row -->
     <form [formGroup]="scheduleForm" class="mb-6 grid grid-cols-3 items-end gap-4">
-      <!-- Activity select -->
       <mat-form-field appearance="outline" class="flex-1" subscriptSizing="dynamic">
         <mat-label>Activity</mat-label>
         <mat-select formControlName="activity" placeholder="Select activity">
@@ -58,7 +56,6 @@
         </mat-select>
       </mat-form-field>
 
-      <!-- Reminder Interval select -->
       <mat-form-field appearance="outline" class="flex-1" subscriptSizing="dynamic">
         <mat-label>Reminder Interval</mat-label>
         <mat-select formControlName="interval">
@@ -68,7 +65,6 @@
         </mat-select>
       </mat-form-field>
 
-      <!-- Schedule button -->
       <button
         mat-flat-button
         type="button"
@@ -81,7 +77,6 @@
       </button>
     </form>
 
-    <!-- Table -->
     <table
       mat-table
       [dataSource]="dataSource"

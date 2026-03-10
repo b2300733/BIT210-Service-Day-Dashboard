@@ -10,7 +10,6 @@ import { AdminQrPage } from './pages/admin-qr/admin-qr';
 import { EmployeeDashboardPage } from './pages/employee-dashboard/employee-dashboard';
 import { EmployeeActivitiesComponent } from './pages/employee-activities/employee-activities';
 import { EmployeeRegistrationsComponent } from './pages/employee-registrations/employee-registrations';
-import { EmployeeNotificationsComponent } from './pages/employee-notifications/employee-notifications';
 import { EmployeeCheckinComponent } from './pages/employee-qr/employee-qr';
 
 export const routes: Routes = [
@@ -33,7 +32,6 @@ export const routes: Routes = [
       { path: '', redirectTo: 'browse', pathMatch: 'full' },
       { path: 'browse', component: EmployeeActivitiesComponent },
       { path: 'registration', component: EmployeeRegistrationsComponent },
-      { path: 'notifications', component: EmployeeNotificationsComponent },
       { path: 'qr-checkin', component: EmployeeCheckinComponent },
     ],
   },
