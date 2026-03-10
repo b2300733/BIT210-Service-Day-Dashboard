@@ -17,6 +17,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Plus, Pencil, Trash2, Calendar, MapPin, Clock } from 'lucide-angular';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { Activity } from '../../data/activities.data';
 import { ActivitiesService } from '../../services/activities.service';
 import { COMMON_PAGES_MODULES } from '../../module/common.pages.module';
@@ -37,6 +38,15 @@ export class AdminActivitiesPage implements AfterViewInit, OnInit {
 
   readonly dialog = inject(MatDialog);
   private activitiesService = inject(ActivitiesService);
+  private snackBar = inject(MatSnackBar);
+
+  private showSnackbar(message: string): void {
+    this.snackBar.open(message, 'Close', {
+      duration: 3000,
+      horizontalPosition: 'right',
+      verticalPosition: 'top',
+    });
+  }
 
   openDelete(element: Activity) {
     const dialogRef = this.dialog.open(DeleteActivitiesDialog, {
@@ -46,6 +56,7 @@ export class AdminActivitiesPage implements AfterViewInit, OnInit {
     dialogRef.afterClosed().subscribe((result) => {
       if (result) {
         this.activitiesService.deleteActivity(element);
+        this.showSnackbar(`"${element.name}" has been deleted.`);
       }
     });
   }
@@ -60,9 +71,11 @@ export class AdminActivitiesPage implements AfterViewInit, OnInit {
         if (element) {
           // Edit mode - update existing activity
           this.activitiesService.updateActivity(element, result);
+          this.showSnackbar(`"${result.name}" has been updated successfully.`);
         } else {
           // Add mode - add new activity
           this.activitiesService.addActivity(result);
+          this.showSnackbar(`"${result.name}" has been added successfully.`);
         }
       }
     });

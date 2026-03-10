@@ -8,7 +8,7 @@ export interface Activity {
   totalSlots: number;
   cutoffDate: string;
   cutoffTime: string;
-  description?: string;
+  description: string;
 }
 
 export interface RegistrationTimeline {
@@ -224,6 +224,8 @@ export const ACTIVITIES_DATA: Activity[] = [
     totalSlots: 25,
     cutoffDate: '2026-02-12',
     cutoffTime: '17:00',
+    description:
+      'Join us for a community-led environmental cleanup and tree planting initiative at Central Community Park. Help restore local green spaces and promote sustainability for future generations.',
   },
   {
     name: 'Helping Hands Shelter',
@@ -235,6 +237,8 @@ export const ACTIVITIES_DATA: Activity[] = [
     totalSlots: 17,
     cutoffDate: '2026-02-18',
     cutoffTime: '17:00',
+    description:
+      'Volunteer at the Downtown Shelter to assist with meal preparation, distribution, and support services for individuals experiencing homelessness. Your presence makes a meaningful difference.',
   },
   {
     name: 'Food for All Initiative',
@@ -246,6 +250,8 @@ export const ACTIVITIES_DATA: Activity[] = [
     totalSlots: 27,
     cutoffDate: '2026-02-22',
     cutoffTime: '17:00',
+    description:
+      'Help sort, pack, and distribute food donations at the City Food Bank to ensure nutritious meals reach families in need. Together we can combat hunger in our local community.',
   },
   {
     name: 'Clean Water Project',
@@ -257,6 +263,8 @@ export const ACTIVITIES_DATA: Activity[] = [
     totalSlots: 35,
     cutoffDate: '2026-02-27',
     cutoffTime: '17:00',
+    description:
+      'Support our efforts to provide clean, safe drinking water to underserved communities. Volunteers will assist with water purification station setup, maintenance, and community education.',
   },
   {
     name: 'Green Earth Foundation1',
@@ -268,6 +276,8 @@ export const ACTIVITIES_DATA: Activity[] = [
     totalSlots: 25,
     cutoffDate: '2026-03-12',
     cutoffTime: '17:00',
+    description:
+      'Join us for a community-led environmental cleanup and tree planting initiative at Central Community Park. Help restore local green spaces and promote sustainability for future generations.',
   },
   {
     name: 'Helping Hands Shelter',
@@ -279,6 +289,8 @@ export const ACTIVITIES_DATA: Activity[] = [
     totalSlots: 17,
     cutoffDate: '2026-03-18',
     cutoffTime: '17:00',
+    description:
+      'Volunteer at the Downtown Shelter to assist with meal preparation, distribution, and support services for individuals experiencing homelessness. Your presence makes a meaningful difference.',
   },
   {
     name: 'Food for All Initiative',
@@ -290,6 +302,8 @@ export const ACTIVITIES_DATA: Activity[] = [
     totalSlots: 27,
     cutoffDate: '2026-03-22',
     cutoffTime: '17:00',
+    description:
+      'Help sort, pack, and distribute food donations at the City Food Bank to ensure nutritious meals reach families in need. Together we can combat hunger in our local community.',
   },
   {
     name: 'Clean Water Project',
@@ -301,6 +315,8 @@ export const ACTIVITIES_DATA: Activity[] = [
     totalSlots: 35,
     cutoffDate: '2026-03-27',
     cutoffTime: '17:00',
+    description:
+      'Support our efforts to provide clean, safe drinking water to underserved communities. Volunteers will assist with water purification station setup, maintenance, and community education.',
   },
   {
     name: 'Green Earth Foundation',
@@ -312,6 +328,8 @@ export const ACTIVITIES_DATA: Activity[] = [
     totalSlots: 25,
     cutoffDate: '2026-03-12',
     cutoffTime: '17:00',
+    description:
+      'Join us for a community-led environmental cleanup and tree planting initiative at Central Community Park. Help restore local green spaces and promote sustainability for future generations.',
   },
   {
     name: 'Helping Hands Shelter',
@@ -323,6 +341,8 @@ export const ACTIVITIES_DATA: Activity[] = [
     totalSlots: 17,
     cutoffDate: '2026-03-18',
     cutoffTime: '17:00',
+    description:
+      'Volunteer at the Downtown Shelter to assist with meal preparation, distribution, and support services for individuals experiencing homelessness. Your presence makes a meaningful difference.',
   },
   {
     name: 'Food for All Initiative',
@@ -334,6 +354,8 @@ export const ACTIVITIES_DATA: Activity[] = [
     totalSlots: 27,
     cutoffDate: '2026-03-22',
     cutoffTime: '17:00',
+    description:
+      'Help sort, pack, and distribute food donations at the City Food Bank to ensure nutritious meals reach families in need. Together we can combat hunger in our local community.',
   },
   {
     name: 'Clean Water Project',
@@ -345,6 +367,8 @@ export const ACTIVITIES_DATA: Activity[] = [
     totalSlots: 35,
     cutoffDate: '2026-03-27',
     cutoffTime: '17:00',
+    description:
+      'Support our efforts to provide clean, safe drinking water to underserved communities. Volunteers will assist with water purification station setup, maintenance, and community education.',
   },
   {
     name: 'Green Earth Foundation',
@@ -356,6 +380,8 @@ export const ACTIVITIES_DATA: Activity[] = [
     totalSlots: 25,
     cutoffDate: '2026-03-12',
     cutoffTime: '17:00',
+    description:
+      'Join us for a community-led environmental cleanup and tree planting initiative at Central Community Park. Help restore local green spaces and promote sustainability for future generations.',
   },
   {
     name: 'Helping Hands Shelter',
@@ -367,6 +393,8 @@ export const ACTIVITIES_DATA: Activity[] = [
     totalSlots: 17,
     cutoffDate: '2026-03-18',
     cutoffTime: '17:00',
+    description:
+      'Volunteer at the Downtown Shelter to assist with meal preparation, distribution, and support services for individuals experiencing homelessness. Your presence makes a meaningful difference.',
   },
   {
     name: 'Food for All Initiative',
@@ -378,6 +406,8 @@ export const ACTIVITIES_DATA: Activity[] = [
     totalSlots: 27,
     cutoffDate: '2026-03-22',
     cutoffTime: '17:00',
+    description:
+      'Help sort, pack, and distribute food donations at the City Food Bank to ensure nutritious meals reach families in need. Together we can combat hunger in our local community.',
   },
   {
     name: 'Clean Water Project',
@@ -389,6 +419,8 @@ export const ACTIVITIES_DATA: Activity[] = [
     totalSlots: 35,
     cutoffDate: '2026-03-27',
     cutoffTime: '17:00',
+    description:
+      'Support our efforts to provide clean, safe drinking water to underserved communities. Volunteers will assist with water purification station setup, maintenance, and community education.',
   },
   {
     name: 'Helping Hands Shelter',
@@ -400,6 +432,8 @@ export const ACTIVITIES_DATA: Activity[] = [
     totalSlots: 17,
     cutoffDate: '2026-03-18',
     cutoffTime: '17:00',
+    description:
+      'Volunteer at the Downtown Shelter to assist with meal preparation, distribution, and support services for individuals experiencing homelessness. Your presence makes a meaningful difference.',
   },
   {
     name: 'Food for All Initiative',
@@ -411,6 +445,8 @@ export const ACTIVITIES_DATA: Activity[] = [
     totalSlots: 27,
     cutoffDate: '2026-03-22',
     cutoffTime: '17:00',
+    description:
+      'Help sort, pack, and distribute food donations at the City Food Bank to ensure nutritious meals reach families in need. Together we can combat hunger in our local community.',
   },
   {
     name: 'Clean Water Project',
@@ -422,6 +458,8 @@ export const ACTIVITIES_DATA: Activity[] = [
     totalSlots: 35,
     cutoffDate: '2026-03-27',
     cutoffTime: '17:00',
+    description:
+      'Support our efforts to provide clean, safe drinking water to underserved communities. Volunteers will assist with water purification station setup, maintenance, and community education.',
   },
   {
     name: 'Helping Hands Shelter',
@@ -433,6 +471,8 @@ export const ACTIVITIES_DATA: Activity[] = [
     totalSlots: 17,
     cutoffDate: '2026-03-18',
     cutoffTime: '17:00',
+    description:
+      'Volunteer at the Downtown Shelter to assist with meal preparation, distribution, and support services for individuals experiencing homelessness. Your presence makes a meaningful difference.',
   },
   {
     name: 'Food for All Initiative',
@@ -444,6 +484,8 @@ export const ACTIVITIES_DATA: Activity[] = [
     totalSlots: 27,
     cutoffDate: '2026-03-22',
     cutoffTime: '17:00',
+    description:
+      'Help sort, pack, and distribute food donations at the City Food Bank to ensure nutritious meals reach families in need. Together we can combat hunger in our local community.',
   },
   {
     name: 'Clean Water Project',
@@ -455,6 +497,8 @@ export const ACTIVITIES_DATA: Activity[] = [
     totalSlots: 35,
     cutoffDate: '2026-03-27',
     cutoffTime: '17:00',
+    description:
+      'Support our efforts to provide clean, safe drinking water to underserved communities. Volunteers will assist with water purification station setup, maintenance, and community education.',
   },
   {
     name: 'Helping Hands Shelter',
@@ -466,6 +510,8 @@ export const ACTIVITIES_DATA: Activity[] = [
     totalSlots: 17,
     cutoffDate: '2026-03-18',
     cutoffTime: '17:00',
+    description:
+      'Volunteer at the Downtown Shelter to assist with meal preparation, distribution, and support services for individuals experiencing homelessness. Your presence makes a meaningful difference.',
   },
   {
     name: 'Food for All Initiative',
@@ -477,6 +523,8 @@ export const ACTIVITIES_DATA: Activity[] = [
     totalSlots: 27,
     cutoffDate: '2026-03-22',
     cutoffTime: '17:00',
+    description:
+      'Help sort, pack, and distribute food donations at the City Food Bank to ensure nutritious meals reach families in need. Together we can combat hunger in our local community.',
   },
   {
     name: 'Clean Water Project',
@@ -488,5 +536,7 @@ export const ACTIVITIES_DATA: Activity[] = [
     totalSlots: 35,
     cutoffDate: '2026-03-27',
     cutoffTime: '17:00',
+    description:
+      'Support our efforts to provide clean, safe drinking water to underserved communities. Volunteers will assist with water purification station setup, maintenance, and community education.',
   },
 ];
