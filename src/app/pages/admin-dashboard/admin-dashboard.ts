@@ -33,5 +33,9 @@ export class AdminDashboardPage implements OnInit {
       this.totalRegistered = stats.totalRegistered;
       this.totalAvailable = stats.totalAvailable;
     });
+
+    if (this.activitiesService.getActivities().length === 0) {
+      this.activitiesService.fetchActivities().subscribe();
+    }
   }
 }

@@ -55,8 +55,15 @@ export class AdminActivitiesPage implements AfterViewInit, OnInit {
 
     dialogRef.afterClosed().subscribe((result) => {
       if (result) {
-        this.activitiesService.deleteActivity(element);
-        this.showSnackbar(`"${element.name}" has been deleted.`);
+        this.activitiesService.deleteActivity(element).subscribe({
+          next: () => {
+            this.showSnackbar(`"${element.name}" has been deleted.`);
+          },
+          error: (err) => {
+            this.showSnackbar('Error deleting activity. Please try again.');
+            console.error('Delete error:', err);
+          },
+        });
       }
     });
   }
@@ -69,13 +76,25 @@ export class AdminActivitiesPage implements AfterViewInit, OnInit {
     dialogRef.afterClosed().subscribe((result) => {
       if (result) {
         if (element) {
-          // Edit mode - update existing activity
-          this.activitiesService.updateActivity(element, result);
-          this.showSnackbar(`"${result.name}" has been updated successfully.`);
+          this.activitiesService.updateActivity(element, result).subscribe({
+            next: () => {
+              this.showSnackbar(`"${result.name}" has been updated successfully.`);
+            },
+            error: (err) => {
+              this.showSnackbar('Error updating activity. Please try again.');
+              console.error('Update error:', err);
+            },
+          });
         } else {
-          // Add mode - add new activity
-          this.activitiesService.addActivity(result);
-          this.showSnackbar(`"${result.name}" has been added successfully.`);
+          this.activitiesService.addActivity(result).subscribe({
+            next: () => {
+              this.showSnackbar(`"${result.name}" has been added successfully.`);
+            },
+            error: (err) => {
+              this.showSnackbar('Error adding activity. Please try again.');
+              console.error('Add error:', err);
+            },
+          });
         }
       }
     });
@@ -100,6 +119,16 @@ export class AdminActivitiesPage implements AfterViewInit, OnInit {
   ngOnInit() {
     this.activitiesService.activities$.subscribe((activities) => {
       this.dataSource.data = activities;
+    });
+
+    this.activitiesService.fetchActivities().subscribe({
+      next: (activities) => {
+        console.log('Activities loaded successfully:', activities.length);
+      },
+      error: (err) => {
+        this.showSnackbar('Error loading activities. Please refresh the page.');
+        console.error('Fetch error:', err);
+      },
     });
   }
 
