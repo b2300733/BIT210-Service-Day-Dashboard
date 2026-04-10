@@ -17,14 +17,14 @@ import { MatInputModule } from '@angular/material/input';
 import { provideNativeDateAdapter } from '@angular/material/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { Chart, registerables } from 'chart.js';
-import { ActivitiesService } from '../../services/activities.service';
+import { ActivitiesService } from '../../../../backend/services/activities.service';
 import {
   REGISTRATION_TIMELINE_DATA,
   EMPLOYEE_REGISTRATIONS_DATA,
   EmployeeRegistration,
   Activity,
   ACTIVITIES_DATA,
-} from '../../data/activities.data';
+} from '../../../../backend/data/activities.data';
 import { MatExpansionModule, MatExpansionPanel } from '@angular/material/expansion';
 import { LiveAnnouncer } from '@angular/cdk/a11y';
 import { MatSort, Sort, MatSortModule } from '@angular/material/sort';

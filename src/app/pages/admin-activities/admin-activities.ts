@@ -18,8 +18,8 @@ import { MatSelectModule } from '@angular/material/select';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Plus, Pencil, Trash2, Calendar, MapPin, Clock } from 'lucide-angular';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { Activity } from '../../data/activities.data';
-import { ActivitiesService } from '../../services/activities.service';
+import { Activity } from '../../../../backend/data/activities.data';
+import { ActivitiesService } from '../../../../backend/services/activities.service';
 import { COMMON_PAGES_MODULES } from '../../module/common.pages.module';
 
 @Component({

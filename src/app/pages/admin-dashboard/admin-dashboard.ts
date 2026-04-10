@@ -2,7 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { Building2, Users, UserCheck, UserX } from 'lucide-angular';
 import { AdminNavbarComponent } from '../../components/admin-navbar/admin-navbar';
-import { ActivitiesService } from '../../services/activities.service';
+import { ActivitiesService } from '../../../../backend/services/activities.service';
 import { HeaderComponent } from '../../components/header/header';
 import { COMMON_PAGES_MODULES } from '../../module/common.pages.module';
 

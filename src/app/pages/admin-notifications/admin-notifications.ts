@@ -10,7 +10,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { Send, CalendarClock, Clock, CircleCheck } from 'lucide-angular';
 import { MatDialogActions } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { ACTIVITIES_DATA } from '../../data/activities.data';
+import { ACTIVITIES_DATA } from '../../../../backend/data/activities.data';
 import { COMMON_PAGES_MODULES } from '../../module/common.pages.module';
 
 export interface ScheduledReminder {

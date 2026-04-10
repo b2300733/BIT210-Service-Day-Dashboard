@@ -18,8 +18,8 @@ import {
   ScanLine,
 } from 'lucide-angular';
 import { COMMON_PAGES_MODULES } from '../../module/common.pages.module';
-import { ACTIVITIES_DATA, Activity } from '../../data/activities.data';
-import { QrService, CheckInRecord } from '../../services/qr.service';
+import { ACTIVITIES_DATA, Activity } from '../../../../backend/data/activities.data';
+import { QrService, CheckInRecord } from '../../../../backend/services/qr.service';
 
 export type { CheckInRecord };
 
