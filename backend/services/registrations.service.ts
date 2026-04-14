@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
+import { tap } from 'rxjs/operators';
 
 export interface Registration {
   _id?: string;
@@ -35,9 +36,35 @@ const API_URL = 'http://localhost:3000/api/registrations';
 })
 export class RegistrationsService {
   private http = inject(HttpClient);
+  private registrationsSubject = new BehaviorSubject<Registration[]>([]);
+  private activeEmployeeId: string | null = null;
+
+  readonly registrations$ = this.registrationsSubject.asObservable();
+
+  setActiveEmployeeId(employeeId: string) {
+    this.activeEmployeeId = employeeId;
+  }
+
+  refreshActiveRegistrations() {
+    if (!this.activeEmployeeId) {
+      return;
+    }
+
+    this.listRegistrations(this.activeEmployeeId).subscribe({
+      error: (err) => {
+        console.error('Error refreshing registrations:', err);
+      },
+    });
+  }
 
   listRegistrations(employeeId: string): Observable<Registration[]> {
-    return this.http.get<Registration[]>(`${API_URL}?employeeId=${encodeURIComponent(employeeId)}`);
+    return this.http
+      .get<Registration[]>(`${API_URL}?employeeId=${encodeURIComponent(employeeId)}`)
+      .pipe(
+        tap((registrations) => {
+          this.registrationsSubject.next(registrations);
+        }),
+      );
   }
 
   listRegistrationsWithActivity(employeeId: string): Observable<RegistrationWithActivity[]> {
@@ -47,14 +74,22 @@ export class RegistrationsService {
   }
 
   createRegistration(employeeId: string, activityId: string): Observable<Registration> {
-    return this.http.post<Registration>(API_URL, { employeeId, activityId });
+    return this.http.post<Registration>(API_URL, { employeeId, activityId }).pipe(
+      tap(() => {
+        this.refreshActiveRegistrations();
+      }),
+    );
   }
 
   deleteRegistration(employeeId: string, activityId: string): Observable<{ message: string }> {
-    return this.http.delete<{ message: string }>(
-      `${API_URL}?employeeId=${encodeURIComponent(employeeId)}&activityId=${encodeURIComponent(
-        activityId,
-      )}`,
-    );
+    return this.http
+      .delete<{
+        message: string;
+      }>(`${API_URL}?employeeId=${encodeURIComponent(employeeId)}&activityId=${encodeURIComponent(activityId)}`)
+      .pipe(
+        tap(() => {
+          this.refreshActiveRegistrations();
+        }),
+      );
   }
 }

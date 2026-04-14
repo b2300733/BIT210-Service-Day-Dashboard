@@ -167,6 +167,7 @@ export class EmployeeActivitiesComponent implements OnInit {
           );
           this.changeDetectorRef.markForCheck();
           this.refreshActivities();
+          this.registrationsService.refreshActiveRegistrations();
         },
         error: (err) => {
           console.error('Registration failed:', err);
@@ -197,6 +198,7 @@ export class EmployeeActivitiesComponent implements OnInit {
           this.userRegistrations = nextRegistrations;
           this.changeDetectorRef.markForCheck();
           this.refreshActivities();
+          this.registrationsService.refreshActiveRegistrations();
         },
         error: (err) => {
           console.error('Cancel registration failed:', err);
