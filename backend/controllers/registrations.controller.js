@@ -21,6 +21,42 @@ const listRegistrations = async (req, res) => {
   }
 };
 
+const listRegistrationsWithActivity = async (req, res) => {
+  try {
+    const employeeId = req.query.employeeId?.trim();
+    if (!employeeId) {
+      return res.status(400).json({ message: 'employeeId is required.' });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(employeeId)) {
+      return res.status(400).json({ message: 'employeeId must be a valid id.' });
+    }
+
+    const registrations = await Registration.find({ employeeId })
+      .populate({
+        path: 'activityId',
+        select:
+          'name serviceType scheduleDate scheduleTime location description cutoffDate cutoffTime',
+      })
+      .select('-__v')
+      .lean();
+
+    const result = registrations
+      .filter((registration) => registration.activityId)
+      .map((registration) => ({
+        _id: registration._id,
+        employeeId: registration.employeeId,
+        activity: registration.activityId,
+        createdAt: registration.createdAt,
+        updatedAt: registration.updatedAt,
+      }));
+
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 const createRegistration = async (req, res) => {
   try {
     const employeeId = req.body?.employeeId?.trim();
@@ -92,6 +128,11 @@ const deleteRegistration = async (req, res) => {
       return res.status(404).json({ message: 'Activity not found.' });
     }
 
+    const cutoffDateTime = new Date(`${activity.cutoffDate}T${activity.cutoffTime}`);
+    if (!Number.isNaN(cutoffDateTime.getTime()) && cutoffDateTime < new Date()) {
+      return res.status(409).json({ message: 'Cancellation cutoff has passed.' });
+    }
+
     if (activity.registered > 0) {
       await Activity.findByIdAndUpdate(activityId, { $inc: { registered: -1 } });
     }
@@ -104,6 +145,7 @@ const deleteRegistration = async (req, res) => {
 
 module.exports = {
   listRegistrations,
+  listRegistrationsWithActivity,
   createRegistration,
   deleteRegistration,
 };

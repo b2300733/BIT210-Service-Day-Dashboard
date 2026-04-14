@@ -176,6 +176,11 @@ export class EmployeeActivitiesComponent implements OnInit {
   }
 
   cancelRegistration(activity: Activity) {
+    if (this.isCutoffPassed(activity)) {
+      console.warn('Cancellation cutoff has passed.');
+      return;
+    }
+
     this.ensureEmployeeId().subscribe((employeeId) => {
       if (!employeeId || !activity._id) {
         console.error('Missing employee or activity id.', {

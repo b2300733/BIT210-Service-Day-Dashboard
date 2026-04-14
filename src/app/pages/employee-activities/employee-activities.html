@@ -90,7 +90,16 @@
             Cutoff: {{ getCutoffLabel(activity) }}
           </div>
 
-          @if (isRegistered(activity)) {
+          @if (isRegistered(activity) && isCutoffPassed(activity)) {
+            <button
+              (click)="$event.stopPropagation()"
+              class="w-full cursor-not-allowed rounded-lg border border-[#c9a3a3] bg-[#c9a3a3] py-2 text-sm font-medium text-white"
+            >
+              Cancellation Closed
+            </button>
+          }
+
+          @if (isRegistered(activity) && !isCutoffPassed(activity)) {
             <button
               class="hover:bg-red hover:border-red w-full cursor-pointer rounded-lg border border-gray-200 py-2 text-sm font-medium transition-colors hover:text-white"
               (click)="$event.stopPropagation(); cancelRegistration(activity)"
@@ -246,7 +255,15 @@
         </div>
 
         <div class="sticky bottom-0 z-10 border-t border-gray-100 bg-gray-50 p-6">
-          @if (isRegistered(selectedActivity)) {
+          @if (isRegistered(selectedActivity) && isCutoffPassed(selectedActivity)) {
+            <button
+              class="w-full cursor-not-allowed rounded-xl bg-[#c9a3a3] py-3 text-base font-semibold text-white shadow-sm"
+            >
+              Cancellation Closed
+            </button>
+          }
+
+          @if (isRegistered(selectedActivity) && !isCutoffPassed(selectedActivity)) {
             <button
               class="border-red hover:bg-red text-red w-full cursor-pointer rounded-xl border-2 bg-white py-3 text-base font-semibold transition-colors hover:text-white"
               (click)="cancelRegistration(selectedActivity)"

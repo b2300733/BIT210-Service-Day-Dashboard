@@ -1,9 +1,20 @@
-import { Component } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  DestroyRef,
+  inject,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { LucideAngularModule, MapPin, Calendar, Clock } from 'lucide-angular';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { of } from 'rxjs';
+import { AuthService } from '../../../../backend/services/auth.service';
+import { RegistrationsService } from '../../../../backend/services/registrations.service';
 
-interface Registration {
-  id: number;
+interface RegistrationItem {
+  id: string;
+  activityId: string;
   title: string;
   category: string;
   status: string;
@@ -12,49 +23,118 @@ interface Registration {
   time: string;
   location: string;
   registeredOn: string;
+  cutoffDate: string;
+  cutoffTime: string;
 }
 
 @Component({
   selector: 'app-employee-registrations',
-  standalone: true,
   imports: [CommonModule, LucideAngularModule],
   templateUrl: './employee-registrations.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EmployeeRegistrationsComponent {
   readonly MapPin = MapPin;
   readonly Calendar = Calendar;
   readonly Clock = Clock;
 
-  // Updated based on the 'Registered' items from the Browse page data
-  registrations: Registration[] = [
-    {
-      id: 1,
-      title: 'Green Earth Foundation',
-      category: 'Environmental',
-      status: 'Confirmed',
-      description:
-        'Tree planting and park restoration in the community garden. Volunteers will help plant native species and restore walking paths.',
-      date: '2026-03-15',
-      time: '09:00',
-      location: 'Central Community Park',
-      registeredOn: '2/1/2026',
-    },
-    {
-      id: 6, // Matching the ID from the browse page data if you used my previous snippet
-      title: 'Senior Center Tech Help',
-      category: 'Community Service',
-      status: 'Confirmed',
-      description:
-        'Assist elderly residents with basic technology needs, such as setting up smartphones, using email, and video calling families.',
-      date: '2026-03-18',
-      time: '14:00',
-      location: 'Sunrise Senior Living',
-      registeredOn: '2/15/2026',
-    },
-  ];
+  private readonly registrationsService = inject(RegistrationsService);
+  private readonly authService = inject(AuthService);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly changeDetectorRef = inject(ChangeDetectorRef);
 
-  cancelRegistration(registrationId: number) {
-    // Filter out the cancelled registration to update the UI
-    this.registrations = this.registrations.filter((reg) => reg.id !== registrationId);
+  registrations: RegistrationItem[] = [];
+
+  constructor() {
+    this.ensureEmployeeId().subscribe((employeeId) => {
+      if (!employeeId) {
+        return;
+      }
+
+      this.registrationsService
+        .listRegistrationsWithActivity(employeeId)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: (registrations) => {
+            this.registrations = registrations.map((registration) => ({
+              id: registration._id ?? `${registration.activity._id ?? registration.activity.name}`,
+              activityId:
+                registration.activity._id ?? `${registration.activity.name}-${registration._id}`,
+              title: registration.activity.name,
+              category: registration.activity.serviceType,
+              status: 'Confirmed',
+              description: registration.activity.description,
+              date: registration.activity.scheduleDate,
+              time: registration.activity.scheduleTime,
+              location: registration.activity.location,
+              registeredOn: this.formatDate(registration.createdAt),
+              cutoffDate: registration.activity.cutoffDate,
+              cutoffTime: registration.activity.cutoffTime,
+            }));
+            this.changeDetectorRef.markForCheck();
+          },
+          error: (err) => {
+            console.error('Error loading registrations:', err);
+          },
+        });
+    });
+  }
+
+  cancelRegistration(registrationId: string) {
+    const target = this.registrations.find((reg) => reg.id === registrationId);
+    if (!target) {
+      return;
+    }
+
+    if (this.isCutoffPassed(target)) {
+      console.warn('Cancellation cutoff has passed.');
+      return;
+    }
+
+    const employeeId = this.authService.currentUser()?._id ?? null;
+    if (!employeeId) {
+      return;
+    }
+
+    this.registrationsService.deleteRegistration(employeeId, target.activityId).subscribe({
+      next: () => {
+        this.registrations = this.registrations.filter((reg) => reg.id !== registrationId);
+        this.changeDetectorRef.markForCheck();
+      },
+      error: (err) => {
+        console.error('Cancel registration failed:', err);
+      },
+    });
+  }
+
+  private formatDate(value?: string): string {
+    if (!value) {
+      return '';
+    }
+
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? '' : date.toLocaleDateString();
+  }
+
+  isCutoffPassed(registration: RegistrationItem): boolean {
+    if (!registration.cutoffDate || !registration.cutoffTime) {
+      return false;
+    }
+
+    const cutoffDateTime = new Date(`${registration.cutoffDate}T${registration.cutoffTime}`);
+    return Number.isNaN(cutoffDateTime.getTime()) ? false : cutoffDateTime < new Date();
+  }
+
+  private ensureEmployeeId() {
+    const current = this.authService.currentUser();
+    if (!current) {
+      return of(null);
+    }
+
+    if (current._id) {
+      return of(current._id);
+    }
+
+    return this.authService.fetchUserId(current.email);
   }
 }
