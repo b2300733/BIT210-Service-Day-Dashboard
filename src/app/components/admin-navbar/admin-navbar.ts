@@ -1,6 +1,13 @@
 import { Component } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
-import { LucideAngularModule, Building2, ChartColumn, Bell, QrCode } from 'lucide-angular';
+import {
+  LucideAngularModule,
+  Building2,
+  ChartColumn,
+  Bell,
+  QrCode,
+  UserPlus,
+} from 'lucide-angular';
 
 @Component({
   selector: 'app-admin-navbar',
@@ -13,4 +20,5 @@ export class AdminNavbarComponent {
   readonly ChartColumn = ChartColumn;
   readonly Bell = Bell;
   readonly QrCode = QrCode;
+  readonly UserPlus = UserPlus;
 }

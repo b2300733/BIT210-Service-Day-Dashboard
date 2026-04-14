@@ -23,7 +23,6 @@ import {
   EMPLOYEE_REGISTRATIONS_DATA,
   EmployeeRegistration,
   Activity,
-  ACTIVITIES_DATA,
 } from '../../../../backend/data/activities.data';
 import { MatExpansionModule, MatExpansionPanel } from '@angular/material/expansion';
 import { LiveAnnouncer } from '@angular/cdk/a11y';
@@ -84,30 +83,14 @@ export class AdminParticipationMonitorPage implements AfterViewInit, OnInit {
   private allTimelineData = REGISTRATION_TIMELINE_DATA;
 
   ngOnInit() {
-    // Get all activities from ACTIVITIES_DATA and sort by latest date
-    this.allActivities = [...ACTIVITIES_DATA].sort((a, b) => {
-      // Parse dates more explicitly to handle inconsistent formatting
-      const dateA = new Date(`${a.scheduleDate} ${a.scheduleTime}`);
-      const dateB = new Date(`${b.scheduleDate} ${b.scheduleTime}`);
-
-      // Latest first (descending order)
-      return dateB.getTime() - dateA.getTime();
+    this.activitiesService.activities$.subscribe((activities) => {
+      this.setActivities(activities);
     });
 
-    this.totalActivities = this.allActivities.length;
-    this.updatePaginatedActivities();
-
-    // Create data sources for all activities
-    this.allActivities.forEach((activity, index) => {
-      const activityKey = `${activity.name}_${index}`; // Unique key for each activity instance
-      const registrations = this.allEmployeeRegistrations.filter(
-        (reg) => reg.activity === activity.name,
-      );
-      this.activityDataSources.set(activityKey, new MatTableDataSource(registrations));
-    });
-
-    this.activitiesService.activities$.subscribe(() => {
-      // Future: Update timeline when activities change
+    this.activitiesService.fetchActivities().subscribe({
+      error: (err) => {
+        console.error('Fetch activities error:', err);
+      },
     });
 
     // Set default to last 7 days
@@ -152,6 +135,36 @@ export class AdminParticipationMonitorPage implements AfterViewInit, OnInit {
     const startIndex = this.pageIndex * this.pageSize;
     const endIndex = startIndex + this.pageSize;
     this.activities = this.allActivities.slice(startIndex, endIndex);
+  }
+
+  private setActivities(activities: Activity[]) {
+    this.allActivities = [...activities].sort((a, b) => {
+      const dateA = new Date(`${a.scheduleDate} ${a.scheduleTime}`);
+      const dateB = new Date(`${b.scheduleDate} ${b.scheduleTime}`);
+      return dateB.getTime() - dateA.getTime();
+    });
+
+    this.totalActivities = this.allActivities.length;
+    if (this.pageIndex * this.pageSize >= this.totalActivities) {
+      this.pageIndex = 0;
+    }
+
+    this.updatePaginatedActivities();
+
+    this.activityDataSources.clear();
+    this.allActivities.forEach((activity, index) => {
+      const activityKey = `${activity.name}_${index}`;
+      const registrations = this.allEmployeeRegistrations.filter(
+        (reg) => reg.activity === activity.name,
+      );
+      this.activityDataSources.set(activityKey, new MatTableDataSource(registrations));
+    });
+
+    if (this.sorts?.length) {
+      setTimeout(() => {
+        this.assignSortsToDataSources();
+      });
+    }
   }
 
   onPageChange(event: PageEvent) {

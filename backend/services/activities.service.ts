@@ -1,10 +1,11 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
-import { delay, tap, map, catchError } from 'rxjs/operators';
-import { Activity, ACTIVITIES_DATA } from '../data/activities.data';
 
-const API_URL = '/api/activities';
+import { BehaviorSubject, Observable, throwError } from 'rxjs';
+import { tap, catchError } from 'rxjs/operators';
+import { Activity } from '../data/activities.data';
+
+const API_URL = 'http://localhost:3000/api/activities';
 
 @Injectable({
   providedIn: 'root',
@@ -12,9 +13,7 @@ const API_URL = '/api/activities';
 export class ActivitiesService {
   private http = inject(HttpClient);
 
-  private mockDatabase: Activity[] = [...ACTIVITIES_DATA];
-
-  private activitiesSubject = new BehaviorSubject<Activity[]>([...ACTIVITIES_DATA]);
+  private activitiesSubject = new BehaviorSubject<Activity[]>([]);
   private loadingSubject = new BehaviorSubject<boolean>(false);
 
   public activities$ = this.activitiesSubject.asObservable();
@@ -26,8 +25,7 @@ export class ActivitiesService {
 
   fetchActivities(): Observable<Activity[]> {
     this.loadingSubject.next(true);
-
-    return of([...this.mockDatabase]).pipe(
+    return this.http.get<Activity[]>(API_URL).pipe(
       tap((activities) => {
         this.activitiesSubject.next(activities);
         this.loadingSubject.next(false);
@@ -41,17 +39,13 @@ export class ActivitiesService {
 
   addActivity(activity: Activity): Observable<Activity> {
     this.loadingSubject.next(true);
-
-    return of(activity).pipe(
+    return this.http.post<Activity>(API_URL, activity).pipe(
       tap((newActivity) => {
-        console.log('Adding activity:', newActivity.name);
-        this.mockDatabase = [...this.mockDatabase, newActivity];
-        this.activitiesSubject.next([...this.mockDatabase]);
+        this.activitiesSubject.next([...this.activitiesSubject.value, newActivity]);
         this.loadingSubject.next(false);
       }),
       catchError((error) => {
         this.loadingSubject.next(false);
-        console.error('Error adding activity:', error);
         return throwError(() => error);
       }),
     );
@@ -59,21 +53,17 @@ export class ActivitiesService {
 
   updateActivity(oldActivity: Activity, newActivity: Activity): Observable<Activity> {
     this.loadingSubject.next(true);
-
-    return of(newActivity).pipe(
+    const id = (oldActivity as any)._id || (newActivity as any)._id;
+    return this.http.put<Activity>(`${API_URL}/${id}`, newActivity).pipe(
       tap((updated) => {
-        console.log('Updating activity:', updated.name);
-        const index = this.mockDatabase.findIndex((a) => a.name === oldActivity.name);
-        if (index !== -1) {
-          this.mockDatabase = [...this.mockDatabase];
-          this.mockDatabase[index] = updated;
-          this.activitiesSubject.next([...this.mockDatabase]);
-        }
+        const updatedList = this.activitiesSubject.value.map((a) =>
+          (a as any)._id === id ? updated : a,
+        );
+        this.activitiesSubject.next(updatedList);
         this.loadingSubject.next(false);
       }),
       catchError((error) => {
         this.loadingSubject.next(false);
-        console.error('Error updating activity:', error);
         return throwError(() => error);
       }),
     );
@@ -81,17 +71,16 @@ export class ActivitiesService {
 
   deleteActivity(activity: Activity): Observable<void> {
     this.loadingSubject.next(true);
-
-    return of(undefined).pipe(
+    const id = (activity as any)._id;
+    return this.http.delete<void>(`${API_URL}/${id}`).pipe(
       tap(() => {
-        console.log('Deleting activity:', activity.name);
-        this.mockDatabase = this.mockDatabase.filter((a) => a.name !== activity.name);
-        this.activitiesSubject.next([...this.mockDatabase]);
+        this.activitiesSubject.next(
+          this.activitiesSubject.value.filter((a) => (a as any)._id !== id),
+        );
         this.loadingSubject.next(false);
       }),
       catchError((error) => {
         this.loadingSubject.next(false);
-        console.error('Error deleting activity:', error);
         return throwError(() => error);
       }),
     );

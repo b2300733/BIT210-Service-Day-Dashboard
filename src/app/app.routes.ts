@@ -6,6 +6,7 @@ import { AdminActivitiesPage } from './pages/admin-activities/admin-activities';
 import { AdminParticipationMonitorPage } from './pages/admin-participation-monitor/admin-participation-monitor';
 import { AdminNotificationsPage } from './pages/admin-notifications/admin-notifications';
 import { AdminQrPage } from './pages/admin-qr/admin-qr';
+import { AdminUsersPage } from './pages/admin-users/admin-users';
 
 import { EmployeeDashboardPage } from './pages/employee-dashboard/employee-dashboard';
 import { EmployeeActivitiesComponent } from './pages/employee-activities/employee-activities';
@@ -20,6 +21,7 @@ export const routes: Routes = [
     children: [
       { path: '', redirectTo: 'activities', pathMatch: 'full' },
       { path: 'activities', component: AdminActivitiesPage },
+      { path: 'users', component: AdminUsersPage },
       { path: 'participation', component: AdminParticipationMonitorPage },
       { path: 'notifications', component: AdminNotificationsPage },
       { path: 'qr-checkin', component: AdminQrPage },
