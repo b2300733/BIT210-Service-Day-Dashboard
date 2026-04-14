@@ -11,6 +11,8 @@ app.use(express.json());
 
 // Activities API routes
 app.use('/api/activities', require('./routes/activities.route'));
+// Registrations API routes
+app.use('/api/registrations', require('./routes/registrations.route'));
 // Users API routes
 app.use('/api/users', require('./routes/users.route'));
 

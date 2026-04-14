@@ -27,16 +27,16 @@ export class LoginPage {
 
   signIn() {
     this.error = '';
-    const success = this.authService.login(this.email, this.password);
-    if (!success) {
-      this.error = 'Invalid credentials. Please try again.';
-      return;
-    }
-    const user = this.authService.currentUser();
-    if (user?.role === 'admin') {
-      this.router.navigate(['/admin-dashboard']);
-    } else {
-      this.router.navigate(['/employee-dashboard']);
-    }
+    this.authService.login(this.email, this.password).subscribe((user) => {
+      if (!user) {
+        this.error = 'Invalid credentials. Please try again.';
+        return;
+      }
+      if (user.role === 'admin') {
+        this.router.navigate(['/admin-dashboard']);
+      } else {
+        this.router.navigate(['/employee-dashboard']);
+      }
+    });
   }
 }

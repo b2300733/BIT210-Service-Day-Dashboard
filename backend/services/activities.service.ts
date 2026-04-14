@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 
 import { BehaviorSubject, Observable, throwError } from 'rxjs';
 import { tap, catchError } from 'rxjs/operators';
-import { Activity } from '../data/activities.data';
+import { Activity } from '../../src/app/models/activity.model';
 
 const API_URL = 'http://localhost:3000/api/activities';
 
@@ -53,12 +53,10 @@ export class ActivitiesService {
 
   updateActivity(oldActivity: Activity, newActivity: Activity): Observable<Activity> {
     this.loadingSubject.next(true);
-    const id = (oldActivity as any)._id || (newActivity as any)._id;
+    const id = oldActivity._id || newActivity._id;
     return this.http.put<Activity>(`${API_URL}/${id}`, newActivity).pipe(
       tap((updated) => {
-        const updatedList = this.activitiesSubject.value.map((a) =>
-          (a as any)._id === id ? updated : a,
-        );
+        const updatedList = this.activitiesSubject.value.map((a) => (a._id === id ? updated : a));
         this.activitiesSubject.next(updatedList);
         this.loadingSubject.next(false);
       }),
@@ -71,12 +69,10 @@ export class ActivitiesService {
 
   deleteActivity(activity: Activity): Observable<void> {
     this.loadingSubject.next(true);
-    const id = (activity as any)._id;
+    const id = activity._id;
     return this.http.delete<void>(`${API_URL}/${id}`).pipe(
       tap(() => {
-        this.activitiesSubject.next(
-          this.activitiesSubject.value.filter((a) => (a as any)._id !== id),
-        );
+        this.activitiesSubject.next(this.activitiesSubject.value.filter((a) => a._id !== id));
         this.loadingSubject.next(false);
       }),
       catchError((error) => {

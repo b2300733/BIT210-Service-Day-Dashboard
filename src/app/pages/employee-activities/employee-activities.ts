@@ -1,131 +1,95 @@
-import { Component } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  DestroyRef,
+  OnInit,
+  inject,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { FormsModule } from '@angular/forms';
-import { LucideAngularModule, MapPin, Calendar, Users, Clock, CheckCircle, X, AlertTriangle } from 'lucide-angular'; // <-- Added AlertTriangle
-
-interface Activity {
-  id: number;
-  title: string;
-  category: string;
-  description: string;
-  date: string;
-  time: string;
-  location: string;
-  slotsFilled: number;
-  slotsTotal: number;
-  cutoff: string;
-  registered: boolean;
-}
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { of } from 'rxjs';
+import {
+  LucideAngularModule,
+  MapPin,
+  Calendar,
+  Users,
+  Clock,
+  CheckCircle,
+  X,
+  AlertTriangle,
+} from 'lucide-angular'; // <-- Added AlertTriangle
+import { ActivitiesService } from '../../../../backend/services/activities.service';
+import { AuthService } from '../../../../backend/services/auth.service';
+import { RegistrationsService } from '../../../../backend/services/registrations.service';
+import { Activity } from '../../models/activity.model';
 
 @Component({
   selector: 'app-employee-activities',
-  standalone: true,
   imports: [CommonModule, MatCardModule, MatButtonModule, LucideAngularModule, FormsModule],
   templateUrl: './employee-activities.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class EmployeeActivitiesComponent {
+export class EmployeeActivitiesComponent implements OnInit {
   readonly MapPin = MapPin;
   readonly Calendar = Calendar;
   readonly Users = Users;
   readonly Clock = Clock;
   readonly CheckCircle = CheckCircle;
-  readonly X = X; 
+  readonly X = X;
   readonly AlertTriangle = AlertTriangle; // <-- Added for the conflict modal
 
-  searchTerm = '';
-  selectedActivity: Activity | null = null; 
-  
-  // Tracks conflicting activities to trigger the warning modal
-  conflictWarning: { attempting: Activity, existing: Activity } | null = null;
+  private readonly activitiesService = inject(ActivitiesService);
+  private readonly registrationsService = inject(RegistrationsService);
+  private readonly authService = inject(AuthService);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly changeDetectorRef = inject(ChangeDetectorRef);
 
-  activities: Activity[] = [
-    {
-      id: 1,
-      title: 'Green Earth Foundation',
-      category: 'Environmental',
-      description: 'Tree planting and park restoration in the community garden. Volunteers will help plant native species, clear invasive weeds, and set up new irrigation lines to ensure the long-term health of the local ecosystem. Please wear comfortable outdoor clothing, closed-toe shoes, and bring a reusable water bottle. All tools will be provided on-site.',
-      date: '2026-03-15',
-      time: '09:00',
-      location: 'Central Community Park',
-      slotsFilled: 18,
-      slotsTotal: 25,
-      cutoff: '2026-03-12 at 17:00',
-      registered: true,
-    },
-    {
-      id: 2,
-      title: 'Food For All',
-      category: 'Community Service',
-      description: 'Prepare and distribute meals to underserved communities. Volunteers will be involved in food preparation, packaging, and managing the distribution lines. This initiative aims to serve over 500 hot meals to families in need. No prior cooking experience is required; our head chefs will guide all teams.',
-      date: '2026-03-15',
-      time: '08:00',
-      location: 'Downtown Food Bank',
-      slotsFilled: 30,
-      slotsTotal: 30,
-      cutoff: '2026-03-12 at 17:00',
-      registered: false,
-    },
-    {
-      id: 3,
-      title: 'Bright Futures Academy',
-      category: 'Education',
-      description: 'STEM workshop mentoring for underprivileged youth. Teach basic coding and robotics to students aged 12-15 using interactive kits. No prior expert coding experience is required, just a willingness to guide, encourage students through problem-solving exercises, and foster a fun learning environment.',
-      date: '2026-03-16',
-      time: '10:00',
-      location: 'Riverside Community Center',
-      slotsFilled: 8,
-      slotsTotal: 15,
-      cutoff: '2026-03-13 at 17:00',
-      registered: false,
-    },
-    {
-      id: 4,
-      title: 'Habitat Builders',
-      category: 'Housing',
-      description: 'Assist in building homes for families in need. Activities include painting, basic construction, drywall installation, landscaping, and site cleanup. Professional site managers will be present to guide all volunteers, ensuring a safe, educational, and highly productive environment for everyone involved.',
-      date: '2026-03-16',
-      time: '07:30',
-      location: 'Westside Development Area',
-      slotsFilled: 10,
-      slotsTotal: 20,
-      cutoff: '2026-03-14 at 17:00',
-      registered: false,
-    },
-    {
-      id: 5,
-      title: 'Paws & Claws Shelter',
-      category: 'Animal Welfare',
-      description: 'Help care for rescued animals, including feeding, grooming, and socializing with adoptable pets. Volunteers will also assist in cleaning enclosures, organizing donated supplies, and walking the larger dogs. It is a highly rewarding day for animal lovers wanting to make a direct impact on shelter operations.',
-      date: '2026-03-12',
-      time: '09:00',
-      location: 'City Animal Shelter',
-      slotsFilled: 5,
-      slotsTotal: 15,
-      cutoff: '2026-03-12 at 17:00',
-      registered: false,
-    },
-    {
-      id: 6,
-      title: 'Senior Center Tech Help',
-      category: 'Community Service',
-      description: 'Assist elderly residents with basic technology needs. You will be helping them set up smartphones, use email, recognize and avoid online scams, and learn how to video call their families. Your patience and friendly guidance will drastically help them stay connected in an increasingly digital world.',
-      date: '2026-03-18',
-      time: '14:00',
-      location: 'Sunrise Senior Living',
-      slotsFilled: 10,
-      slotsTotal: 12, 
-      cutoff: '2026-03-16 at 17:00',
-      registered: true,
-    }
-  ];
+  readonly cardBaseClass =
+    'flex min-h-105 cursor-pointer flex-col justify-between rounded-xl !bg-white p-6 transition-all duration-200 ease-in hover:-translate-y-1 hover:shadow-lg';
+
+  searchTerm = '';
+  selectedActivity: Activity | null = null;
+
+  // Tracks conflicting activities to trigger the warning modal
+  conflictWarning: { attempting: Activity; existing: Activity } | null = null;
+
+  activities: Activity[] = [];
+  private userRegistrations = new Set<string>();
+
+  ngOnInit() {
+    this.activitiesService.activities$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((activities) => {
+        this.activities = activities;
+        this.changeDetectorRef.markForCheck();
+      });
+
+    this.activitiesService.fetchActivities().subscribe({
+      error: (err) => {
+        console.error('Error loading activities:', err);
+      },
+    });
+
+    this.ensureEmployeeId().subscribe(() => {
+      this.loadRegistrations();
+    });
+  }
 
   get filteredActivities() {
-    return this.activities.filter(a =>
-      a.title.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-      a.location.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-      a.category.toLowerCase().includes(this.searchTerm.toLowerCase())
+    const term = this.searchTerm.trim().toLowerCase();
+    if (!term) {
+      return this.activities;
+    }
+
+    return this.activities.filter(
+      (a) =>
+        a.name.toLowerCase().includes(term) ||
+        a.location.toLowerCase().includes(term) ||
+        a.serviceType.toLowerCase().includes(term),
     );
   }
 
@@ -137,42 +101,155 @@ export class EmployeeActivitiesComponent {
     this.selectedActivity = null;
   }
 
+  isRegistered(activity: Activity): boolean {
+    return this.userRegistrations.has(this.getActivityKey(activity));
+  }
+
+  getCutoffLabel(activity: Activity): string {
+    return `${activity.cutoffDate} at ${activity.cutoffTime}`;
+  }
+
+  isCutoffPassed(activity: Activity): boolean {
+    if (!activity.cutoffDate || !activity.cutoffTime) {
+      return false;
+    }
+
+    const cutoffDateTime = new Date(`${activity.cutoffDate}T${activity.cutoffTime}`);
+    return Number.isNaN(cutoffDateTime.getTime()) ? false : cutoffDateTime < new Date();
+  }
+
   register(activity: Activity) {
-    console.log('Attempting to register for:', activity.title);
+    console.log('Attempting to register for:', activity.name);
+
+    if (this.isCutoffPassed(activity)) {
+      console.warn('Registration cutoff has passed.');
+      return;
+    }
 
     // 1. Check if the user is already registered for an event on this same date
     const existingRegistration = this.activities.find(
-      a => a.registered === true && a.date === activity.date && a.id !== activity.id
+      (a) =>
+        this.isRegistered(a) &&
+        a.scheduleDate === activity.scheduleDate &&
+        this.getActivityKey(a) !== this.getActivityKey(activity),
     );
 
     // 2. If a conflict exists, show the warning modal and stop the registration
     if (existingRegistration) {
-      console.log('Conflict found! Already registered for:', existingRegistration.title);
-      
+      console.log('Conflict found! Already registered for:', existingRegistration.name);
+
       // Close the details modal (if open) so they don't overlap
-      this.selectedActivity = null; 
-      
+      this.selectedActivity = null;
+
       // Trigger the warning modal
       this.conflictWarning = {
         attempting: activity,
-        existing: existingRegistration
+        existing: existingRegistration,
       };
-      return; 
+      return;
     }
 
     // 3. Otherwise, proceed with registration
     console.log('Registration successful!');
-    activity.registered = true;
-    activity.slotsFilled += 1;
+    this.ensureEmployeeId().subscribe((employeeId) => {
+      if (!employeeId || !activity._id) {
+        console.error('Missing employee or activity id.', {
+          employeeId,
+          activityId: activity._id,
+        });
+        return;
+      }
+
+      this.registrationsService.createRegistration(employeeId, activity._id).subscribe({
+        next: () => {
+          this.userRegistrations = new Set(this.userRegistrations).add(
+            this.getActivityKey(activity),
+          );
+          this.changeDetectorRef.markForCheck();
+          this.refreshActivities();
+        },
+        error: (err) => {
+          console.error('Registration failed:', err);
+        },
+      });
+    });
   }
 
   cancelRegistration(activity: Activity) {
-    activity.registered = false;
-    activity.slotsFilled -= 1;
+    this.ensureEmployeeId().subscribe((employeeId) => {
+      if (!employeeId || !activity._id) {
+        console.error('Missing employee or activity id.', {
+          employeeId,
+          activityId: activity._id,
+        });
+        return;
+      }
+
+      this.registrationsService.deleteRegistration(employeeId, activity._id).subscribe({
+        next: () => {
+          const nextRegistrations = new Set(this.userRegistrations);
+          nextRegistrations.delete(this.getActivityKey(activity));
+          this.userRegistrations = nextRegistrations;
+          this.changeDetectorRef.markForCheck();
+          this.refreshActivities();
+        },
+        error: (err) => {
+          console.error('Cancel registration failed:', err);
+        },
+      });
+    });
   }
 
   // Closes the conflict warning modal
   closeConflictWarning() {
     this.conflictWarning = null;
+  }
+
+  private getActivityKey(activity: Activity): string {
+    return activity._id ?? activity.name;
+  }
+
+  private refreshActivities() {
+    this.activitiesService.fetchActivities().subscribe({
+      error: (err) => {
+        console.error('Error refreshing activities:', err);
+      },
+    });
+  }
+
+  private loadRegistrations() {
+    const employeeId = this.getEmployeeId();
+    if (!employeeId) {
+      return;
+    }
+
+    this.registrationsService.listRegistrations(employeeId).subscribe({
+      next: (registrations) => {
+        this.userRegistrations = new Set(
+          registrations.map((registration) => registration.activityId),
+        );
+        this.changeDetectorRef.markForCheck();
+      },
+      error: (err) => {
+        console.error('Error loading registrations:', err);
+      },
+    });
+  }
+
+  private getEmployeeId(): string | null {
+    return this.authService.currentUser()?._id ?? null;
+  }
+
+  private ensureEmployeeId() {
+    const current = this.authService.currentUser();
+    if (!current) {
+      return of(null);
+    }
+
+    if (current._id) {
+      return of(current._id);
+    }
+
+    return this.authService.fetchUserId(current.email);
   }
 }
