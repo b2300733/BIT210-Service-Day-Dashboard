@@ -14,6 +14,7 @@ export interface UserResponse {
   name: string;
   email: string;
   department: string;
+  role?: 'employee' | 'admin';
   createdAt: string;
 }
 
