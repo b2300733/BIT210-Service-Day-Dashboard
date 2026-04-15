@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { tap } from 'rxjs/operators';
+import { map, tap } from 'rxjs/operators';
 
 export interface Registration {
   _id?: string;
@@ -37,6 +37,11 @@ export interface EmployeeRegistration {
   activity: string;
   registeredDate: string;
   registeredTime: string;
+}
+
+export interface RegistrationTimeline {
+  date: string;
+  registrations: number;
 }
 
 const API_URL = 'http://localhost:3000/api/registrations';
@@ -85,6 +90,29 @@ export class RegistrationsService {
 
   listRegistrationsWithEmployee(): Observable<EmployeeRegistration[]> {
     return this.http.get<EmployeeRegistration[]>(`${API_URL}/with-employee`);
+  }
+
+  getRegistrationTimeline(): Observable<RegistrationTimeline[]> {
+    return this.listRegistrationsWithEmployee().pipe(
+      map((registrations) => this.buildTimelineData(registrations)),
+    );
+  }
+
+  private buildTimelineData(registrations: EmployeeRegistration[]): RegistrationTimeline[] {
+    const counts = new Map<string, number>();
+
+    registrations.forEach((registration) => {
+      const dateKey = registration.registeredDate;
+      if (!dateKey) {
+        return;
+      }
+
+      counts.set(dateKey, (counts.get(dateKey) || 0) + 1);
+    });
+
+    return Array.from(counts.entries())
+      .map(([date, registrationsCount]) => ({ date, registrations: registrationsCount }))
+      .sort((a, b) => a.date.localeCompare(b.date));
   }
 
   createRegistration(employeeId: string, activityId: string): Observable<Registration> {

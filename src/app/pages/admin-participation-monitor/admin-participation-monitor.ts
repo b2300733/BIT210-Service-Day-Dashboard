@@ -18,9 +18,10 @@ import { provideNativeDateAdapter } from '@angular/material/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { Chart, registerables } from 'chart.js';
 import { ActivitiesService } from '../../../../backend/services/activities.service';
-import { Activity, RegistrationTimeline } from '../../../../backend/data/activities.data';
+import { Activity } from '../../../../backend/data/activities.data';
 import {
   EmployeeRegistration,
+  RegistrationTimeline,
   RegistrationsService,
 } from '../../../../backend/services/registrations.service';
 import { MatExpansionModule, MatExpansionPanel } from '@angular/material/expansion';
@@ -91,11 +92,19 @@ export class AdminParticipationMonitorPage implements AfterViewInit, OnInit {
       next: (registrations) => {
         this.allEmployeeRegistrations = registrations;
         this.rebuildActivityDataSources();
-        this.allTimelineData = this.buildTimelineData(registrations);
-        this.updateChartData();
       },
       error: (err) => {
         console.error('Fetch registrations error:', err);
+      },
+    });
+
+    this.registrationsService.getRegistrationTimeline().subscribe({
+      next: (timeline) => {
+        this.allTimelineData = timeline;
+        this.updateChartData();
+      },
+      error: (err) => {
+        console.error('Fetch registration timeline error:', err);
       },
     });
 
@@ -318,23 +327,6 @@ export class AdminParticipationMonitorPage implements AfterViewInit, OnInit {
     this.timelineChart.data.labels = labels;
     this.timelineChart.data.datasets[0].data = data;
     this.timelineChart.update();
-  }
-
-  private buildTimelineData(registrations: EmployeeRegistration[]): RegistrationTimeline[] {
-    const counts = new Map<string, number>();
-
-    registrations.forEach((registration) => {
-      const dateKey = registration.registeredDate;
-      if (!dateKey) {
-        return;
-      }
-
-      counts.set(dateKey, (counts.get(dateKey) || 0) + 1);
-    });
-
-    return Array.from(counts.entries())
-      .map(([date, registrationsCount]) => ({ date, registrations: registrationsCount }))
-      .sort((a, b) => a.date.localeCompare(b.date));
   }
 
   private formatDate(date: string): string {
