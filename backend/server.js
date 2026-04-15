@@ -15,6 +15,8 @@ app.use('/api/activities', require('./routes/activities.route'));
 app.use('/api/registrations', require('./routes/registrations.route'));
 // Users API routes
 app.use('/api/users', require('./routes/users.route'));
+// Reminders API routes
+app.use('/api/reminders', require('./routes/reminders.route'));
 
 mongoose
   .connect(process.env.MongoDB_Host)

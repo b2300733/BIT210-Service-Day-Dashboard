@@ -11,13 +11,12 @@ import { Send, CalendarClock, Clock, CircleCheck } from 'lucide-angular';
 import { MatDialogActions } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ActivitiesService } from '../../../../backend/services/activities.service';
-import { RegistrationsService } from '../../../../backend/services/registrations.service';
-import { UsersService } from '../../../../backend/services/users.service';
+import { RemindersService } from '../../../../backend/services/reminders.service';
 import { Activity } from '../../models/activity.model';
 import { COMMON_PAGES_MODULES } from '../../module/common.pages.module';
-import { environment } from '../../../environments/environment';
 
 export interface ScheduledReminder {
+  _id?: string;
   activity: string;
   type: string;
   scheduledFor: string;
@@ -49,8 +48,7 @@ export class AdminNotificationsPage implements AfterViewInit, OnInit {
   private _liveAnnouncer = inject(LiveAnnouncer);
   private _snackBar = inject(MatSnackBar);
   private activitiesService = inject(ActivitiesService);
-  private registrationsService = inject(RegistrationsService);
-  private usersService = inject(UsersService);
+  private remindersService = inject(RemindersService);
 
   private showSnackbar(message: string): void {
     this._snackBar.open(message, '', {
@@ -65,7 +63,6 @@ export class AdminNotificationsPage implements AfterViewInit, OnInit {
   scheduleForm: FormGroup;
 
   activities: string[] = [];
-  private activityDetails: Activity[] = [];
 
   intervalOptions = [
     { value: '1-week', label: '1 week before' },
@@ -92,7 +89,6 @@ export class AdminNotificationsPage implements AfterViewInit, OnInit {
 
   ngOnInit() {
     this.activitiesService.activities$.subscribe((activities: Activity[]) => {
-      this.activityDetails = activities;
       this.activities = activities.map((activity) => activity.name);
     });
 
@@ -100,6 +96,16 @@ export class AdminNotificationsPage implements AfterViewInit, OnInit {
       error: (err) => {
         console.error('Fetch activities error:', err);
         this.showSnackbar('Error loading activities. Please refresh the page.');
+      },
+    });
+
+    this.remindersService.listReminders().subscribe({
+      next: (reminders) => {
+        this.dataSource.data = reminders;
+      },
+      error: (err) => {
+        console.error('Fetch reminders error:', err);
+        this.showSnackbar('Error loading reminders. Please refresh the page.');
       },
     });
   }
@@ -120,118 +126,69 @@ export class AdminNotificationsPage implements AfterViewInit, OnInit {
     const { activity, interval } = this.scheduleForm.value;
     if (!activity) return;
     const option = this.intervalOptions.find((o) => o.value === interval);
-    const daysMap: Record<string, number> = { '1-week': 7, '3-day': 3, '1-day': 1 };
-    const days = daysMap[interval] ?? 7;
-    const scheduledDate = new Date();
-    scheduledDate.setDate(scheduledDate.getDate() + days);
-    const formatted = scheduledDate.toLocaleDateString('en-US') + ' 05:00 PM';
-    this.dataSource.data = [
-      ...this.dataSource.data,
-      { activity, type: option?.value ?? interval, scheduledFor: formatted, status: 'pending' },
-    ];
-    this.scheduleForm.patchValue({ activity: '' });
+    const payload = {
+      activity,
+      type: option?.value ?? interval,
+    };
+
+    this.remindersService.createReminder(payload).subscribe({
+      next: (created) => {
+        this.dataSource.data = [...this.dataSource.data, created];
+        this.scheduleForm.patchValue({ activity: '' });
+        this.showSnackbar('Reminder scheduled successfully.');
+      },
+      error: (err) => {
+        console.error('Create reminder error:', err);
+        this.showSnackbar('Failed to schedule reminder.');
+      },
+    });
   }
 
   sendBroadcast(): void {
     if (this.broadcastForm.invalid) return;
-    const url = environment.apdUrl;
-    if (!url) {
-      this.showSnackbar('Broadcast service is not running.');
-      return;
-    }
     const { title, message } = this.broadcastForm.value;
 
-    this.usersService.listUsers().subscribe({
-      next: (users) => {
-        const employeeEmails = users
-          .filter((user) => user.role === 'employee')
-          .map((user) => user.email);
-
-        if (!employeeEmails.length) {
+    this.remindersService.sendBroadcast({ title, message }).subscribe({
+      next: (result) => {
+        if (!result.sent) {
           this.showSnackbar('No employee emails found.');
           return;
         }
-
-        Promise.all(
-          employeeEmails.map((to) =>
-            fetch(url, {
-              method: 'POST',
-              body: JSON.stringify({ action: 'broadcast', title, message, to }),
-            }).then((response) => {
-              if (!response.ok) throw new Error('Network response was not ok');
-            }),
-          ),
-        )
-          .then(() => {
-            this.showSnackbar(`Broadcast "${title}" sent to all employees.`);
-            this.broadcastForm.reset();
-          })
-          .catch((err) => {
-            console.log('Error sending broadcast:', err);
-            this.showSnackbar('Failed to send broadcast');
-          });
+        this.showSnackbar(`Broadcast "${title}" sent to all employees.`);
+        this.broadcastForm.reset();
       },
       error: (err) => {
-        console.log('Error loading users:', err);
-        this.showSnackbar('Failed to load employee emails');
+        console.log('Error sending broadcast:', err);
+        this.showSnackbar('Failed to send broadcast');
       },
     });
   }
 
   sendNow(reminder: ScheduledReminder): void {
-    const url = environment.apdUrl;
-    if (!url) {
-      this.showSnackbar('Broadcast service is not running.');
+    if (!reminder._id) {
+      this.showSnackbar('Reminder ID is missing. Please refresh the page.');
       return;
     }
 
-    this.registrationsService.listRegistrationsWithEmployee().subscribe({
-      next: (registrations) => {
-        const activityDetails = this.activityDetails.find(
-          (activity) => activity.name === reminder.activity,
-        );
-        const recipientEmails = registrations
-          .filter((registration) => registration.activity === reminder.activity)
-          .map((registration) => registration.email);
-
-        if (!recipientEmails.length) {
+    this.remindersService.sendReminderNow(reminder._id).subscribe({
+      next: (result) => {
+        if (!result.sent) {
           this.showSnackbar('No registered employees found for this activity.');
           return;
         }
 
-        Promise.all(
-          recipientEmails.map((to) =>
-            fetch(url, {
-              method: 'POST',
-              body: JSON.stringify({
-                action: 'reminder',
-                activity: reminder.activity,
-                scheduleDate: activityDetails?.scheduleDate ?? '',
-                scheduleTime: activityDetails?.scheduleTime ?? '',
-                location: activityDetails?.location ?? '',
-                serviceType: activityDetails?.serviceType ?? '',
-                to,
-              }),
-            }).then((response) => {
-              if (!response.ok) throw new Error('Network response was not ok');
-            }),
-          ),
-        )
-          .then(() => {
-            reminder.status = 'sent';
-            this.dataSource.data = [...this.dataSource.data];
-            this.showSnackbar(
-              `Reminder for "${reminder.activity}" sent to ${recipientEmails.length} employees.`,
-            );
-          })
-          .catch((err) => {
-            console.log('Error sending reminder:', err);
-            this.showSnackbar('Failed to send reminder');
-          });
+        const updatedReminder = result.reminder;
+        if (updatedReminder) {
+          this.dataSource.data = this.dataSource.data.map((item) =>
+            item._id === updatedReminder._id ? updatedReminder : item,
+          );
+        }
+
+        this.showSnackbar(`Sent "${reminder.activity}" reminder to all registered employees.`);
       },
       error: (err) => {
-        console.log('Error loading registrations:', err);
-        this.showSnackbar('Failed to load registrations');
+        console.log('Error sending reminder:', err);
+        this.showSnackbar('Failed to send reminder');
       },
     });
   }
