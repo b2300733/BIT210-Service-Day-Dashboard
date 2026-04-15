@@ -29,6 +29,16 @@ export interface RegistrationWithActivity {
   updatedAt?: string;
 }
 
+export interface EmployeeRegistration {
+  _id?: string;
+  employeeName: string;
+  email: string;
+  department: string;
+  activity: string;
+  registeredDate: string;
+  registeredTime: string;
+}
+
 const API_URL = 'http://localhost:3000/api/registrations';
 
 @Injectable({
@@ -73,6 +83,10 @@ export class RegistrationsService {
     );
   }
 
+  listRegistrationsWithEmployee(): Observable<EmployeeRegistration[]> {
+    return this.http.get<EmployeeRegistration[]>(`${API_URL}/with-employee`);
+  }
+
   createRegistration(employeeId: string, activityId: string): Observable<Registration> {
     return this.http.post<Registration>(API_URL, { employeeId, activityId }).pipe(
       tap(() => {
@@ -85,7 +99,9 @@ export class RegistrationsService {
     return this.http
       .delete<{
         message: string;
-      }>(`${API_URL}?employeeId=${encodeURIComponent(employeeId)}&activityId=${encodeURIComponent(activityId)}`)
+      }>(
+        `${API_URL}?employeeId=${encodeURIComponent(employeeId)}&activityId=${encodeURIComponent(activityId)}`,
+      )
       .pipe(
         tap(() => {
           this.refreshActiveRegistrations();

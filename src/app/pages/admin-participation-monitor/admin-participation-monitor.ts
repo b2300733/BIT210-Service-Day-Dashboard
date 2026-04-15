@@ -18,12 +18,11 @@ import { provideNativeDateAdapter } from '@angular/material/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { Chart, registerables } from 'chart.js';
 import { ActivitiesService } from '../../../../backend/services/activities.service';
+import { Activity, RegistrationTimeline } from '../../../../backend/data/activities.data';
 import {
-  REGISTRATION_TIMELINE_DATA,
-  EMPLOYEE_REGISTRATIONS_DATA,
   EmployeeRegistration,
-  Activity,
-} from '../../../../backend/data/activities.data';
+  RegistrationsService,
+} from '../../../../backend/services/registrations.service';
 import { MatExpansionModule, MatExpansionPanel } from '@angular/material/expansion';
 import { LiveAnnouncer } from '@angular/cdk/a11y';
 import { MatSort, Sort, MatSortModule } from '@angular/material/sort';
@@ -59,7 +58,7 @@ export class AdminParticipationMonitorPage implements AfterViewInit, OnInit {
   allActivities: Activity[] = [];
   activityDataSources = new Map<string, MatTableDataSource<EmployeeRegistration>>();
   displayedColumns: string[] = ['employeeName', 'department', 'registeredDate'];
-  private allEmployeeRegistrations = EMPLOYEE_REGISTRATIONS_DATA;
+  private allEmployeeRegistrations: EmployeeRegistration[] = [];
   private _liveAnnouncer = inject(LiveAnnouncer);
 
   // Pagination
@@ -74,17 +73,30 @@ export class AdminParticipationMonitorPage implements AfterViewInit, OnInit {
   @ViewChild('timelineChart') timelineChartRef!: ElementRef<HTMLCanvasElement>;
   private timelineChart?: Chart;
   private activitiesService = inject(ActivitiesService);
+  private registrationsService = inject(RegistrationsService);
 
   dateRange = new FormGroup({
     start: new FormControl<Date | null>(null),
     end: new FormControl<Date | null>(null),
   });
 
-  private allTimelineData = REGISTRATION_TIMELINE_DATA;
+  private allTimelineData: RegistrationTimeline[] = [];
 
   ngOnInit() {
     this.activitiesService.activities$.subscribe((activities) => {
       this.setActivities(activities);
+    });
+
+    this.registrationsService.listRegistrationsWithEmployee().subscribe({
+      next: (registrations) => {
+        this.allEmployeeRegistrations = registrations;
+        this.rebuildActivityDataSources();
+        this.allTimelineData = this.buildTimelineData(registrations);
+        this.updateChartData();
+      },
+      error: (err) => {
+        console.error('Fetch registrations error:', err);
+      },
     });
 
     this.activitiesService.fetchActivities().subscribe({
@@ -123,7 +135,7 @@ export class AdminParticipationMonitorPage implements AfterViewInit, OnInit {
   private assignSortsToDataSources() {
     const sortArray = this.sorts.toArray();
     this.activities.forEach((activity, index) => {
-      const activityKey = `${activity.name}_${this.pageIndex * this.pageSize + index}`;
+      const activityKey = this.getActivityKey(activity.name);
       const dataSource = this.activityDataSources.get(activityKey);
       if (dataSource && sortArray[index]) {
         dataSource.sort = sortArray[index];
@@ -151,9 +163,13 @@ export class AdminParticipationMonitorPage implements AfterViewInit, OnInit {
 
     this.updatePaginatedActivities();
 
+    this.rebuildActivityDataSources();
+  }
+
+  private rebuildActivityDataSources() {
     this.activityDataSources.clear();
-    this.allActivities.forEach((activity, index) => {
-      const activityKey = `${activity.name}_${index}`;
+    this.allActivities.forEach((activity) => {
+      const activityKey = this.getActivityKey(activity.name);
       const registrations = this.allEmployeeRegistrations.filter(
         (reg) => reg.activity === activity.name,
       );
@@ -304,6 +320,23 @@ export class AdminParticipationMonitorPage implements AfterViewInit, OnInit {
     this.timelineChart.update();
   }
 
+  private buildTimelineData(registrations: EmployeeRegistration[]): RegistrationTimeline[] {
+    const counts = new Map<string, number>();
+
+    registrations.forEach((registration) => {
+      const dateKey = registration.registeredDate;
+      if (!dateKey) {
+        return;
+      }
+
+      counts.set(dateKey, (counts.get(dateKey) || 0) + 1);
+    });
+
+    return Array.from(counts.entries())
+      .map(([date, registrationsCount]) => ({ date, registrations: registrationsCount }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+  }
+
   private formatDate(date: string): string {
     const d = new Date(date);
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -317,10 +350,14 @@ export class AdminParticipationMonitorPage implements AfterViewInit, OnInit {
     activityName: string,
     index: number,
   ): MatTableDataSource<EmployeeRegistration> {
-    const activityKey = `${activityName}_${this.pageIndex * this.pageSize + index}`;
+    const activityKey = this.getActivityKey(activityName);
     return (
       this.activityDataSources.get(activityKey) || new MatTableDataSource<EmployeeRegistration>([])
     );
+  }
+
+  private getActivityKey(activityName: string): string {
+    return activityName;
   }
 
   announceSortChange(sortState: Sort) {

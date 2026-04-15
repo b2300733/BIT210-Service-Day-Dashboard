@@ -3,6 +3,18 @@ const Registration = require('../models/registration.model');
 const Activity = require('../models/activity.model');
 const User = require('../models/user.model');
 
+const formatDateParts = (value) => {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return { date: '', time: '' };
+  }
+
+  const pad = (num) => String(num).padStart(2, '0');
+  const datePart = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+  const timePart = `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  return { date: datePart, time: timePart };
+};
+
 const listRegistrations = async (req, res) => {
   try {
     const employeeId = req.query.employeeId?.trim();
@@ -50,6 +62,35 @@ const listRegistrationsWithActivity = async (req, res) => {
         createdAt: registration.createdAt,
         updatedAt: registration.updatedAt,
       }));
+
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+const listRegistrationsWithEmployee = async (req, res) => {
+  try {
+    const registrations = await Registration.find()
+      .populate({ path: 'employeeId', select: 'name email department' })
+      .populate({ path: 'activityId', select: 'name' })
+      .select('-__v')
+      .lean();
+
+    const result = registrations
+      .filter((registration) => registration.employeeId && registration.activityId)
+      .map((registration) => {
+        const { date, time } = formatDateParts(registration.createdAt || registration.updatedAt);
+        return {
+          _id: registration._id,
+          employeeName: registration.employeeId.name,
+          email: registration.employeeId.email,
+          department: registration.employeeId.department,
+          activity: registration.activityId.name,
+          registeredDate: date,
+          registeredTime: time,
+        };
+      });
 
     res.json(result);
   } catch (err) {
@@ -146,6 +187,7 @@ const deleteRegistration = async (req, res) => {
 module.exports = {
   listRegistrations,
   listRegistrationsWithActivity,
+  listRegistrationsWithEmployee,
   createRegistration,
   deleteRegistration,
 };
