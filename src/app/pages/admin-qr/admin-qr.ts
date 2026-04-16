@@ -249,7 +249,7 @@ export class AdminQrPage implements OnInit, OnDestroy {
       error: (err) => {
         console.error('Failed to check in:', err);
         this.scanStatus = 'error';
-        this.scanMessage = this.getScanErrorMessage(err, 'Check-in failed. Please try again.');
+        this.scanMessage = 'Check-in failed. Please try again.';
       },
     });
   }
@@ -258,32 +258,9 @@ export class AdminQrPage implements OnInit, OnDestroy {
     const now = Date.now();
     if (now - this.lastDecodeErrorAt < 1200) return;
     this.lastDecodeErrorAt = now;
-    if (this.scanStatus === 'idle' || this.scanStatus === 'scanning') {
+    if (this.scanStatus !== 'success') {
       this.scanStatus = 'scanning';
       this.scanMessage = 'Scanning for QR codes...';
     }
-  }
-
-  private getScanErrorMessage(err: unknown, fallback: string): string {
-    if (typeof err === 'object' && err !== null && 'error' in err) {
-      const responseError = (err as { error?: unknown }).error;
-      if (
-        typeof responseError === 'object' &&
-        responseError !== null &&
-        'message' in responseError &&
-        typeof (responseError as { message?: unknown }).message === 'string'
-      ) {
-        return (responseError as { message: string }).message;
-      }
-    }
-
-    if (typeof err === 'object' && err !== null && 'message' in err) {
-      const message = (err as { message?: unknown }).message;
-      if (typeof message === 'string' && message.trim()) {
-        return message;
-      }
-    }
-
-    return fallback;
   }
 }
