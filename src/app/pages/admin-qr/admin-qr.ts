@@ -229,13 +229,6 @@ export class AdminQrPage implements OnInit, OnDestroy {
 
     this.isChecking = true;
 
-    const expectedPrefix = `serviceday:${activityId}:`;
-    if (!data.startsWith(expectedPrefix)) {
-      this.isChecking = false;
-      this.setScanStatus('error', 'This QR code is for a different activity.', 1500);
-      return;
-    }
-
     this.qrService.checkInByQr(activityId, data).subscribe({
       next: (response: CheckInResponse) => {
         this.isChecking = false;
