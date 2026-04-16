@@ -122,6 +122,7 @@ const listRegistrationsWithEmployee = async (req, res) => {
           registeredTime: time,
           qrData: registration.qrData ?? null,
           qrchecked: Boolean(registration.qrchecked),
+          status: registration.qrchecked ? 'checked-in' : 'pending',
           checkedInAt: registration.checkedInAt ? registration.checkedInAt.toISOString() : null,
         };
       });

@@ -185,13 +185,10 @@ export class AdminQrPage implements OnInit, OnDestroy {
       return;
     }
 
-    if (!this.scanner) {
-      this.scanner = new QrScanner(
-        this.qrVideo.nativeElement,
-        (result) => this.handleScan(result),
-        { returnDetailedScanResult: true },
-      );
-    }
+    this.stopScanner();
+    this.scanner = new QrScanner(this.qrVideo.nativeElement, (result) => this.handleScan(result), {
+      returnDetailedScanResult: true,
+    });
 
     try {
       await this.scanner.start();
@@ -202,8 +199,15 @@ export class AdminQrPage implements OnInit, OnDestroy {
   }
 
   private stopScanner(): void {
-    if (!this.scanner) return;
-    this.scanner.stop();
+    if (this.scanner) {
+      this.scanner.stop();
+      this.scanner.destroy();
+      this.scanner = null;
+    }
+
+    if (this.qrVideo?.nativeElement) {
+      this.qrVideo.nativeElement.srcObject = null;
+    }
   }
 
   private handleScan(result: string | { data: string }): void {
