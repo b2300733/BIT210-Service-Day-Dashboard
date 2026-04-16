@@ -36,6 +36,14 @@ const registrationSchema = new mongoose.Schema(
 );
 
 registrationSchema.index({ employeeId: 1, activityId: 1 }, { unique: true });
-registrationSchema.index({ qrData: 1 }, { unique: true, sparse: true });
+registrationSchema.index(
+  { qrData: 1 },
+  {
+    unique: true,
+    partialFilterExpression: {
+      qrData: { $type: 'string', $ne: '' },
+    },
+  },
+);
 
 module.exports = mongoose.model('Registration', registrationSchema);

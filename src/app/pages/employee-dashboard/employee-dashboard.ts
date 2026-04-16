@@ -67,8 +67,15 @@ export class EmployeeDashboardPage {
         this.registeredActivityIds = new Set(
           registrations.map((registration) => registration.activityId),
         );
-        this.recalculateAvailable(this.activitiesService.getActivities());
-        this.changeDetectorRef.markForCheck();
+        this.activitiesService.fetchActivities().subscribe({
+          next: (activities) => {
+            this.recalculateAvailable(activities);
+            this.changeDetectorRef.markForCheck();
+          },
+          error: (err) => {
+            console.error('Error refreshing activities after registration change:', err);
+          },
+        });
       });
   }
 

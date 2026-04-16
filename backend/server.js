@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const express = require('express');
 const cors = require('cors');
 const session = require('express-session');
+const Registration = require('./models/registration.model');
 
 const app = express();
 
@@ -22,6 +23,8 @@ mongoose
   .connect(process.env.MongoDB_Host)
   .then(async () => {
     console.log('connected to database');
+    await Registration.syncIndexes();
+    console.log('Registration indexes synchronized');
   })
   .catch(() => {
     console.log('connection failed');

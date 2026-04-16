@@ -125,6 +125,10 @@ export class EmployeeRegistrationsComponent {
     return Number.isNaN(cutoffDateTime.getTime()) ? false : cutoffDateTime < new Date();
   }
 
+  canCancel(registration: RegistrationItem): boolean {
+    return !this.isCutoffPassed(registration);
+  }
+
   private ensureEmployeeId() {
     const current = this.authService.currentUser();
     if (!current) {

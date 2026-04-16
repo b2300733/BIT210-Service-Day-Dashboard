@@ -9,6 +9,8 @@ export interface Registration {
   activityId: string;
   qrData?: string | null;
   qrGeneratedAt?: string | null;
+  qrchecked?: boolean;
+  checkedInAt?: string | null;
   createdAt?: string;
   updatedAt?: string;
 }
