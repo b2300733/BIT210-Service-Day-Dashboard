@@ -153,7 +153,7 @@ const checkInByQrData = async (req, res) => {
       .populate({ path: 'activityId', select: 'name' });
 
     if (!registration) {
-      return res.status(404).json({ message: 'Invalid QR code for this activity.' });
+      return res.json({ valid: false, message: 'Invalid QR code for this activity.' });
     }
 
     if (!registration.qrchecked) {
@@ -162,7 +162,7 @@ const checkInByQrData = async (req, res) => {
       await registration.save();
     }
 
-    res.json(mapCheckInRecords([registration])[0]);
+    res.json({ valid: true, record: mapCheckInRecords([registration])[0] });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
