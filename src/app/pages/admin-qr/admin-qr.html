@@ -215,7 +215,6 @@
     (click)="closeScanOverlay()"
   >
     <video #qrVideo muted playsinline class="scan-video"></video>
-    <div class="scan-dim"></div>
     <div
       class="absolute top-0 right-0 left-0 flex items-center justify-between px-6 py-4"
       (click)="$event.stopPropagation()"
@@ -238,9 +237,22 @@
       <div class="scan-line bg-primary"></div>
     </div>
 
-    <p class="mt-8 text-sm text-white/70">
-      {{ scanMessage || 'Position the QR code inside the frame' }}
-    </p>
+    <div class="mt-8 flex flex-col items-center gap-2 text-center">
+      <span class="scan-status" [ngClass]="scanStatus">
+        @if (scanStatus === 'success') {
+          Success
+        } @else if (scanStatus === 'error') {
+          Error
+        } @else if (scanStatus === 'scanning') {
+          Scanning
+        } @else {
+          Idle
+        }
+      </span>
+      <p class="text-sm text-white/70">
+        {{ scanMessage || 'Position the QR code inside the frame' }}
+      </p>
+    </div>
   </div>
 }
 

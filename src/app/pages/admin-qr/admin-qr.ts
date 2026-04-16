@@ -63,7 +63,9 @@ export class AdminQrPage implements OnInit, OnDestroy {
   selectedQrRecord: CheckInRecord | null = null;
   showScanOverlay = false;
   scanMessage = '';
+  scanStatus: 'idle' | 'scanning' | 'success' | 'error' = 'idle';
   private scanner: QrScanner | null = null;
+  private lastDecodeErrorAt = 0;
 
   constructor() {
     this.dataSource.sortingDataAccessor = (row, column) => {
@@ -156,7 +158,8 @@ export class AdminQrPage implements OnInit, OnDestroy {
   openScanOverlay(): void {
     if (!this.selectedActivity?._id) return;
     this.showScanOverlay = true;
-    this.scanMessage = 'Position the QR code inside the frame.';
+    this.scanStatus = 'scanning';
+    this.scanMessage = 'Scanning for QR codes...';
     setTimeout(() => {
       this.startScanner();
     }, 0);
@@ -164,6 +167,7 @@ export class AdminQrPage implements OnInit, OnDestroy {
 
   closeScanOverlay(): void {
     this.showScanOverlay = false;
+    this.scanStatus = 'idle';
     this.stopScanner();
   }
 
@@ -188,12 +192,16 @@ export class AdminQrPage implements OnInit, OnDestroy {
     this.stopScanner();
     this.scanner = new QrScanner(this.qrVideo.nativeElement, (result) => this.handleScan(result), {
       returnDetailedScanResult: true,
+      onDecodeError: () => this.handleDecodeError(),
     });
 
     try {
       await this.scanner.start();
+      this.scanStatus = 'scanning';
+      this.scanMessage = 'Scanning for QR codes...';
     } catch (err) {
       console.error('Failed to start scanner:', err);
+      this.scanStatus = 'error';
       this.scanMessage = 'Camera access failed. Check permissions.';
     }
   }
@@ -217,12 +225,14 @@ export class AdminQrPage implements OnInit, OnDestroy {
 
     const expectedPrefix = `serviceday:${activityId}:`;
     if (!data.startsWith(expectedPrefix)) {
+      this.scanStatus = 'error';
       this.scanMessage = 'This QR code is for a different activity.';
       return;
     }
 
     const match = this.dataSource.data.find((record) => record.qrData === data);
     if (!match) {
+      this.scanStatus = 'error';
       this.scanMessage = 'QR code not found in this activity list.';
       return;
     }
@@ -233,12 +243,24 @@ export class AdminQrPage implements OnInit, OnDestroy {
           row.qrData === updated.qrData ? { ...row, ...updated } : row,
         );
         this.dataSource.data = nextRows;
+        this.scanStatus = 'success';
         this.scanMessage = `Checked in: ${updated.employeeName}`;
       },
       error: (err) => {
         console.error('Failed to check in:', err);
+        this.scanStatus = 'error';
         this.scanMessage = 'Check-in failed. Please try again.';
       },
     });
+  }
+
+  private handleDecodeError(): void {
+    const now = Date.now();
+    if (now - this.lastDecodeErrorAt < 1200) return;
+    this.lastDecodeErrorAt = now;
+    if (this.scanStatus !== 'success') {
+      this.scanStatus = 'scanning';
+      this.scanMessage = 'Scanning for QR codes...';
+    }
   }
 }
