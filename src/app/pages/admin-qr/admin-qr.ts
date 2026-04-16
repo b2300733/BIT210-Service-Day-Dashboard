@@ -22,7 +22,7 @@ import {
 import { COMMON_PAGES_MODULES } from '../../module/common.pages.module';
 import { Activity } from '../../models/activity.model';
 import { ActivitiesService } from '../../../../backend/services/activities.service';
-import { QrService, CheckInRecord, CheckInResponse } from '../../../../backend/services/qr.service';
+import { QrService, CheckInRecord } from '../../../../backend/services/qr.service';
 
 export type { CheckInRecord };
 
@@ -223,17 +223,7 @@ export class AdminQrPage implements OnInit, OnDestroy {
     if (!activityId) return;
 
     this.qrService.checkInByQr(activityId, data).subscribe({
-      next: (response: CheckInResponse) => {
-        if (!response.valid || !response.record) {
-          this.setScanStatus(
-            'error',
-            response.message || 'Invalid QR code for this activity.',
-            1500,
-          );
-          return;
-        }
-
-        const updated = response.record;
+      next: (updated) => {
         const nextRows = this.dataSource.data.map((row) =>
           row.qrData === updated.qrData ? { ...row, ...updated } : row,
         );
@@ -241,8 +231,15 @@ export class AdminQrPage implements OnInit, OnDestroy {
         this.setScanStatus('success', `Checked in: ${updated.employeeName}`, 1500);
       },
       error: (err) => {
-        console.error('Failed to check in:', err);
-        this.setScanStatus('error', 'Check-in failed. Please try again.', 1500);
+        if (err?.status !== 404) {
+          console.error('Failed to check in:', err);
+        }
+        const serverMessage = err?.error?.message;
+        const message =
+          typeof serverMessage === 'string' && serverMessage.length > 0
+            ? serverMessage
+            : 'Check-in failed. Please try again.';
+        this.setScanStatus('error', message, 1500);
       },
     });
   }
