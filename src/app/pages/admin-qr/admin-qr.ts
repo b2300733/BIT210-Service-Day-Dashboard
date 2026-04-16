@@ -1,4 +1,4 @@
-import { Component, ElementRef, inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, inject, NgZone, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LiveAnnouncer } from '@angular/cdk/a11y';
@@ -55,6 +55,7 @@ export class AdminQrPage implements OnInit, OnDestroy {
   private qrService = inject(QrService);
   private activitiesService = inject(ActivitiesService);
   private _liveAnnouncer = inject(LiveAnnouncer);
+  private ngZone = inject(NgZone);
 
   activities: Activity[] = [];
   selectedActivity: Activity | null = null;
@@ -187,7 +188,7 @@ export class AdminQrPage implements OnInit, OnDestroy {
 
   private async startScanner(): Promise<void> {
     if (!this.qrVideo?.nativeElement) {
-      this.scanMessage = 'Camera element not ready yet.';
+      this.setScanState('error', 'Camera element not ready yet.');
       return;
     }
 
@@ -199,12 +200,10 @@ export class AdminQrPage implements OnInit, OnDestroy {
 
     try {
       await this.scanner.start();
-      this.scanStatus = 'scanning';
-      this.scanMessage = 'Scanning for QR codes...';
+      this.setScanState('scanning', 'Scanning for QR codes...');
     } catch (err) {
       console.error('Failed to start scanner:', err);
-      this.scanStatus = 'error';
-      this.scanMessage = 'Camera access failed. Check permissions.';
+      this.setScanState('error', 'Camera access failed. Check permissions.');
     }
   }
 
@@ -227,38 +226,39 @@ export class AdminQrPage implements OnInit, OnDestroy {
 
     const expectedPrefix = `serviceday:${activityId}:`;
     if (!data.startsWith(expectedPrefix)) {
-      this.scanStatus = 'error';
-      this.scanMessage = 'This QR code is for a different activity.';
+      this.setScanState('error', 'This QR code is for a different activity.');
       return;
     }
 
     const match = this.dataSource.data.find((record) => record.qrData === data);
     if (!match) {
-      this.scanStatus = 'error';
-      this.scanMessage = 'QR code not found in this activity list.';
+      this.setScanState('error', 'QR code not found in this activity list.');
       return;
     }
 
     this.qrService.checkInByQr(data).subscribe({
       next: (updated) => {
-        const nextRows = this.dataSource.data.map((row) =>
-          row.qrData === updated.qrData ? { ...row, ...updated } : row,
-        );
-        this.dataSource.data = nextRows;
-        this.scanStatus = 'success';
-        this.scanMessage = `Checked in: ${updated.employeeName}`;
+        this.ngZone.run(() => {
+          const nextRows = this.dataSource.data.map((row) =>
+            row.qrData === updated.qrData ? { ...row, ...updated } : row,
+          );
+          this.dataSource.data = nextRows;
+          this.setScanState('success', `Checked in: ${updated.employeeName}`);
+        });
         this.clearSuccessMessageTimer();
         this.successMessageTimer = setTimeout(() => {
-          if (!this.showScanOverlay) return;
-          this.scanStatus = 'scanning';
-          this.scanMessage = 'Scanning for QR codes...';
-          this.successMessageTimer = null;
+          this.ngZone.run(() => {
+            if (!this.showScanOverlay) return;
+            this.setScanState('scanning', 'Scanning for QR codes...');
+            this.successMessageTimer = null;
+          });
         }, 1500);
       },
       error: (err) => {
         console.error('Failed to check in:', err);
-        this.scanStatus = 'error';
-        this.scanMessage = 'Check-in failed. Please try again.';
+        this.ngZone.run(() => {
+          this.setScanState('error', 'Check-in failed. Please try again.');
+        });
       },
     });
   }
@@ -268,8 +268,9 @@ export class AdminQrPage implements OnInit, OnDestroy {
     if (now - this.lastDecodeErrorAt < 1200) return;
     this.lastDecodeErrorAt = now;
     if (this.scanStatus !== 'success') {
-      this.scanStatus = 'scanning';
-      this.scanMessage = 'Scanning for QR codes...';
+      this.ngZone.run(() => {
+        this.setScanState('scanning', 'Scanning for QR codes...');
+      });
     }
   }
 
@@ -278,5 +279,10 @@ export class AdminQrPage implements OnInit, OnDestroy {
       clearTimeout(this.successMessageTimer);
       this.successMessageTimer = null;
     }
+  }
+
+  private setScanState(status: 'idle' | 'scanning' | 'success' | 'error', message: string): void {
+    this.scanStatus = status;
+    this.scanMessage = message;
   }
 }
