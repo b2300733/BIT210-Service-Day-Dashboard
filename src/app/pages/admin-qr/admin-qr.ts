@@ -22,7 +22,7 @@ import {
 import { COMMON_PAGES_MODULES } from '../../module/common.pages.module';
 import { Activity } from '../../models/activity.model';
 import { ActivitiesService } from '../../../../backend/services/activities.service';
-import { QrService, CheckInRecord, CheckInResponse } from '../../../../backend/services/qr.service';
+import { QrService, CheckInRecord } from '../../../../backend/services/qr.service';
 
 export type { CheckInRecord };
 
@@ -66,8 +66,6 @@ export class AdminQrPage implements OnInit, OnDestroy {
   scanStatus: 'idle' | 'scanning' | 'success' | 'error' = 'idle';
   private scanner: QrScanner | null = null;
   private lastDecodeErrorAt = 0;
-  private statusHoldUntil = 0;
-  private statusResetTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
     this.dataSource.sortingDataAccessor = (row, column) => {
@@ -160,7 +158,8 @@ export class AdminQrPage implements OnInit, OnDestroy {
   openScanOverlay(): void {
     if (!this.selectedActivity?._id) return;
     this.showScanOverlay = true;
-    this.setScanStatus('scanning', 'Scanning for QR codes...');
+    this.scanStatus = 'scanning';
+    this.scanMessage = 'Scanning for QR codes...';
     setTimeout(() => {
       this.startScanner();
     }, 0);
@@ -168,7 +167,7 @@ export class AdminQrPage implements OnInit, OnDestroy {
 
   closeScanOverlay(): void {
     this.showScanOverlay = false;
-    this.setScanStatus('idle', '');
+    this.scanStatus = 'idle';
     this.stopScanner();
   }
 
@@ -198,10 +197,12 @@ export class AdminQrPage implements OnInit, OnDestroy {
 
     try {
       await this.scanner.start();
-      this.setScanStatus('scanning', 'Scanning for QR codes...');
+      this.scanStatus = 'scanning';
+      this.scanMessage = 'Scanning for QR codes...';
     } catch (err) {
       console.error('Failed to start scanner:', err);
-      this.setScanStatus('error', 'Camera access failed. Check permissions.', 2000);
+      this.scanStatus = 'error';
+      this.scanMessage = 'Camera access failed. Check permissions.';
     }
   }
 
@@ -222,27 +223,33 @@ export class AdminQrPage implements OnInit, OnDestroy {
     const activityId = this.selectedActivity?._id;
     if (!activityId) return;
 
-    this.qrService.checkInByQr(activityId, data).subscribe({
-      next: (response: CheckInResponse) => {
-        if (!response.valid || !response.record) {
-          this.setScanStatus(
-            'error',
-            response.message || 'Invalid QR code for this activity.',
-            1500,
-          );
-          return;
-        }
+    const expectedPrefix = `serviceday:${activityId}:`;
+    if (!data.startsWith(expectedPrefix)) {
+      this.scanStatus = 'error';
+      this.scanMessage = 'This QR code is for a different activity.';
+      return;
+    }
 
-        const updated = response.record;
+    const match = this.dataSource.data.find((record) => record.qrData === data);
+    if (!match) {
+      this.scanStatus = 'error';
+      this.scanMessage = 'QR code not found in this activity list.';
+      return;
+    }
+
+    this.qrService.checkInByQr(data).subscribe({
+      next: (updated) => {
         const nextRows = this.dataSource.data.map((row) =>
           row.qrData === updated.qrData ? { ...row, ...updated } : row,
         );
         this.dataSource.data = nextRows;
-        this.setScanStatus('success', `Checked in: ${updated.employeeName}`, 1500);
+        this.scanStatus = 'success';
+        this.scanMessage = `Checked in: ${updated.employeeName}`;
       },
       error: (err) => {
         console.error('Failed to check in:', err);
-        this.setScanStatus('error', 'Check-in failed. Please try again.', 1500);
+        this.scanStatus = 'error';
+        this.scanMessage = 'Check-in failed. Please try again.';
       },
     });
   }
@@ -251,33 +258,9 @@ export class AdminQrPage implements OnInit, OnDestroy {
     const now = Date.now();
     if (now - this.lastDecodeErrorAt < 1200) return;
     this.lastDecodeErrorAt = now;
-    if (this.scanStatus !== 'success' && now >= this.statusHoldUntil) {
-      this.setScanStatus('scanning', 'Scanning for QR codes...');
-    }
-  }
-
-  private setScanStatus(
-    status: 'idle' | 'scanning' | 'success' | 'error',
-    message: string,
-    holdMs = 0,
-  ): void {
-    this.scanStatus = status;
-    this.scanMessage = message;
-
-    if (this.statusResetTimer) {
-      clearTimeout(this.statusResetTimer);
-      this.statusResetTimer = null;
-    }
-
-    if (holdMs > 0) {
-      this.statusHoldUntil = Date.now() + holdMs;
-      this.statusResetTimer = setTimeout(() => {
-        if (!this.showScanOverlay) return;
-        this.scanStatus = 'scanning';
-        this.scanMessage = 'Scanning for QR codes...';
-      }, holdMs);
-    } else {
-      this.statusHoldUntil = 0;
+    if (this.scanStatus !== 'success') {
+      this.scanStatus = 'scanning';
+      this.scanMessage = 'Scanning for QR codes...';
     }
   }
 }
