@@ -64,7 +64,10 @@ export class AdminQrPage implements OnInit, OnDestroy {
   showScanOverlay = false;
   scanMessage = '';
   private scanner: QrScanner | null = null;
-  private readonly qrWorkerPath = new URL('../../../qr-scanner-worker', import.meta.url).toString();
+  private readonly qrWorkerPath = new URL(
+    '../../../../qr-scanner-worker',
+    import.meta.url,
+  ).toString();
 
   constructor() {
     this.dataSource.sortingDataAccessor = (row, column) => {
@@ -159,9 +162,9 @@ export class AdminQrPage implements OnInit, OnDestroy {
     if (!this.selectedActivity?._id) return;
     this.showScanOverlay = true;
     this.scanMessage = 'Position the QR code inside the frame.';
-    queueMicrotask(() => {
+    setTimeout(() => {
       this.startScanner();
-    });
+    }, 0);
   }
 
   closeScanOverlay(): void {
@@ -182,7 +185,10 @@ export class AdminQrPage implements OnInit, OnDestroy {
   }
 
   private async startScanner(): Promise<void> {
-    if (!this.qrVideo?.nativeElement) return;
+    if (!this.qrVideo?.nativeElement) {
+      this.scanMessage = 'Camera element not ready yet.';
+      return;
+    }
 
     if (!this.scanner) {
       this.scanner = new QrScanner(
