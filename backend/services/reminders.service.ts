@@ -28,6 +28,10 @@ export interface SendResponse {
   reminder?: ReminderResponse;
 }
 
+export interface DeleteResponse {
+  message: string;
+}
+
 const API_URL = 'http://localhost:3000/api/reminders';
 
 @Injectable({
@@ -54,5 +58,9 @@ export class RemindersService {
 
   updateReminderStatus(id: string, status: 'sent' | 'pending'): Observable<ReminderResponse> {
     return this.http.put<ReminderResponse>(`${API_URL}/${id}`, { status });
+  }
+
+  deleteReminder(id: string): Observable<DeleteResponse> {
+    return this.http.delete<DeleteResponse>(`${API_URL}/${id}`);
   }
 }

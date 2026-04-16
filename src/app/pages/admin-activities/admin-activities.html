@@ -33,7 +33,7 @@
             </th>
             <td mat-cell *matCellDef="let element">
               <div class="inline-flex flex-col py-6">
-                <div class="font-semibold">{{ element.name }}</div>
+                <div class="max-w-30 truncate font-semibold">{{ element.name }}</div>
                 <div class="text-xs text-gray-500">{{ element.serviceType }}</div>
               </div>
             </td>
@@ -67,7 +67,9 @@
             >
               Location
             </th>
-            <td mat-cell *matCellDef="let element" class="py-6">{{ element.location }}</td>
+            <td mat-cell *matCellDef="let element" class="py-6">
+              <div class="max-w-30 truncate">{{ element.location }}</div>
+            </td>
           </ng-container>
 
           <ng-container matColumnDef="slots">
@@ -185,7 +187,7 @@
           <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-xs">
             <div class="mb-3 flex items-start justify-between">
               <div class="flex-1">
-                <div class="text-base font-semibold">{{ element.name }}</div>
+                <div class="w-80 truncate text-base font-semibold">{{ element.name }}</div>
                 <div class="text-sm text-gray-500">{{ element.serviceType }}</div>
               </div>
               <div
@@ -206,7 +208,7 @@
               </div>
               <div class="flex items-center gap-2">
                 <lucide-angular [img]="MapPin" class="h-4 w-4" />
-                <span>{{ element.location }}</span>
+                <span class="max-w-70 truncate">{{ element.location }}</span>
               </div>
               <div class="flex items-center gap-2">
                 <lucide-angular [img]="Clock" class="h-4 w-4" />

@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnInit, ViewChild, inject } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { LiveAnnouncer } from '@angular/cdk/a11y';
@@ -7,7 +7,7 @@ import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { Send, CalendarClock, Clock, CircleCheck } from 'lucide-angular';
+import { Send, CalendarClock, Clock, CircleCheck, Trash2 } from 'lucide-angular';
 import { MatDialogActions } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ActivitiesService } from '../../../../backend/services/activities.service';
@@ -39,16 +39,21 @@ export interface ScheduledReminder {
   templateUrl: './admin-notifications.html',
   styleUrl: './admin-notifications.css',
 })
-export class AdminNotificationsPage implements AfterViewInit, OnInit {
+export class AdminNotificationsPage implements AfterViewInit, OnInit, OnDestroy {
   readonly Send = Send;
   readonly CalendarClock = CalendarClock;
   readonly Clock = Clock;
   readonly CircleCheck = CircleCheck;
+  readonly Trash2 = Trash2;
 
   private _liveAnnouncer = inject(LiveAnnouncer);
   private _snackBar = inject(MatSnackBar);
   private activitiesService = inject(ActivitiesService);
   private remindersService = inject(RemindersService);
+
+  isBroadcastSending = false;
+  sendingReminderId: string | null = null;
+  deletingReminderId: string | null = null;
 
   private showSnackbar(message: string): void {
     this._snackBar.open(message, '', {
@@ -86,6 +91,8 @@ export class AdminNotificationsPage implements AfterViewInit, OnInit {
       interval: ['1-week'],
     });
   }
+
+  ngOnDestroy(): void {}
 
   ngOnInit() {
     this.activitiesService.activities$.subscribe((activities: Activity[]) => {
@@ -145,11 +152,14 @@ export class AdminNotificationsPage implements AfterViewInit, OnInit {
   }
 
   sendBroadcast(): void {
-    if (this.broadcastForm.invalid) return;
+    if (this.broadcastForm.invalid || this.isBroadcastSending) return;
     const { title, message } = this.broadcastForm.value;
+
+    this.isBroadcastSending = true;
 
     this.remindersService.sendBroadcast({ title, message }).subscribe({
       next: (result) => {
+        this.isBroadcastSending = false;
         if (!result.sent) {
           this.showSnackbar('No employee emails found.');
           return;
@@ -158,8 +168,9 @@ export class AdminNotificationsPage implements AfterViewInit, OnInit {
         this.broadcastForm.reset();
       },
       error: (err) => {
+        this.isBroadcastSending = false;
         console.log('Error sending broadcast:', err);
-        this.showSnackbar('Failed to send broadcast');
+        this.showSnackbar(this.getErrorMessage(err, 'Failed to send broadcast'));
       },
     });
   }
@@ -170,8 +181,15 @@ export class AdminNotificationsPage implements AfterViewInit, OnInit {
       return;
     }
 
+    if (this.sendingReminderId === reminder._id) {
+      return;
+    }
+
+    this.sendingReminderId = reminder._id;
+
     this.remindersService.sendReminderNow(reminder._id).subscribe({
       next: (result) => {
+        this.sendingReminderId = null;
         if (!result.sent) {
           this.showSnackbar('No registered employees found for this activity.');
           return;
@@ -187,9 +205,59 @@ export class AdminNotificationsPage implements AfterViewInit, OnInit {
         this.showSnackbar(`Sent "${reminder.activity}" reminder to all registered employees.`);
       },
       error: (err) => {
+        this.sendingReminderId = null;
         console.log('Error sending reminder:', err);
-        this.showSnackbar('Failed to send reminder');
+        this.showSnackbar(this.getErrorMessage(err, 'Failed to send reminder'));
       },
     });
+  }
+
+  deleteReminder(reminder: ScheduledReminder): void {
+    if (!reminder._id) {
+      this.showSnackbar('Reminder ID is missing. Please refresh the page.');
+      return;
+    }
+
+    if (this.deletingReminderId === reminder._id || this.sendingReminderId === reminder._id) {
+      return;
+    }
+
+    this.deletingReminderId = reminder._id;
+
+    this.remindersService.deleteReminder(reminder._id).subscribe({
+      next: () => {
+        this.deletingReminderId = null;
+        this.dataSource.data = this.dataSource.data.filter((item) => item._id !== reminder._id);
+        this.showSnackbar('Reminder deleted successfully.');
+      },
+      error: (err) => {
+        this.deletingReminderId = null;
+        console.error('Error deleting reminder:', err);
+        this.showSnackbar(this.getErrorMessage(err, 'Failed to delete reminder'));
+      },
+    });
+  }
+
+  private getErrorMessage(err: unknown, fallback: string): string {
+    if (typeof err === 'object' && err !== null && 'error' in err) {
+      const responseError = (err as { error?: unknown }).error;
+      if (
+        typeof responseError === 'object' &&
+        responseError !== null &&
+        'message' in responseError &&
+        typeof (responseError as { message?: unknown }).message === 'string'
+      ) {
+        return (responseError as { message: string }).message;
+      }
+    }
+
+    if (typeof err === 'object' && err !== null && 'message' in err) {
+      const message = (err as { message?: unknown }).message;
+      if (typeof message === 'string' && message.trim()) {
+        return message;
+      }
+    }
+
+    return fallback;
   }
 }

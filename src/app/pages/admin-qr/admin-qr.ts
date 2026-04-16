@@ -100,6 +100,14 @@ export class AdminQrPage implements OnInit, OnDestroy {
     return this.dataSource.data.filter((r) => r.status === 'pending').length;
   }
 
+  get isCutoffPassed(): boolean {
+    if (!this.selectedActivity) return false;
+    const cutoffDateTime = new Date(
+      `${this.selectedActivity.cutoffDate}T${this.selectedActivity.cutoffTime}`,
+    );
+    return !Number.isNaN(cutoffDateTime.getTime()) && cutoffDateTime < new Date();
+  }
+
   announceSortChange(sortState: Sort): void {
     if (sortState.direction) {
       this._liveAnnouncer.announce(`Sorted ${sortState.direction}ending`);
@@ -144,7 +152,7 @@ export class AdminQrPage implements OnInit, OnDestroy {
   }
 
   generateQrCodes(): void {
-    if (!this.selectedActivity?._id) return;
+    if (!this.selectedActivity?._id || !this.isCutoffPassed) return;
     this.qrService.generateQrCodes(this.selectedActivity._id).subscribe({
       next: (records) => {
         this.dataSource.data = records;

@@ -171,9 +171,16 @@ const generateQrCodesForActivity = async (req, res) => {
       return res.status(400).json({ message: 'activityId must be a valid id.' });
     }
 
-    const activityExists = await Activity.exists({ _id: activityId });
-    if (!activityExists) {
+    const activity = await Activity.findById(activityId);
+    if (!activity) {
       return res.status(404).json({ message: 'Activity not found.' });
+    }
+
+    const cutoffDateTime = new Date(`${activity.cutoffDate}T${activity.cutoffTime}`);
+    if (!Number.isNaN(cutoffDateTime.getTime()) && cutoffDateTime > new Date()) {
+      return res.status(409).json({
+        message: `Cannot generate QR codes before cutoff time (${activity.cutoffDate} at ${activity.cutoffTime}).`,
+      });
     }
 
     const registrations = await Registration.find({ activityId })

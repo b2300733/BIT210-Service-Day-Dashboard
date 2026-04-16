@@ -23,7 +23,7 @@
       >
         <div class="grow">
           <div class="mb-2 flex items-start justify-between gap-2">
-            <h3 class="py-1 text-[17px] leading-tight font-bold text-gray-900">
+            <h3 class="max-w-80 truncate py-1 text-[17px] leading-tight font-bold text-gray-900">
               {{ activity.name }}
             </h3>
 
@@ -58,7 +58,7 @@
             </div>
             <div class="flex items-center gap-2.5">
               <lucide-icon [img]="MapPin" class="h-4.5 w-4.5 text-gray-400"></lucide-icon>
-              {{ activity.location }}
+              <span class="max-w-70 truncate">{{ activity.location }}</span>
             </div>
           </div>
         </div>
@@ -101,7 +101,7 @@
 
           @if (isRegistered(activity) && !isCutoffPassed(activity)) {
             <button
-              class="hover:bg-red hover:border-red border-red text-red w-full cursor-pointer rounded-lg border py-2 text-sm font-medium transition-colors hover:text-white"
+              class="hover:bg-red hover:border-red w-full cursor-pointer rounded-lg border border-gray-300 py-2 text-sm font-medium transition-colors hover:text-white"
               (click)="$event.stopPropagation(); cancelRegistration(activity)"
             >
               Cancel Registration
@@ -158,7 +158,7 @@
           class="sticky top-0 z-10 flex items-center justify-between border-b border-gray-100 bg-white p-6"
         >
           <div>
-            <h2 class="text-2xl leading-tight font-bold text-gray-900">
+            <h2 class="max-w-130 truncate text-2xl leading-tight font-bold text-gray-900">
               {{ selectedActivity.name }}
             </h2>
             <span
@@ -219,7 +219,9 @@
               </div>
               <div>
                 <p class="text-xs font-semibold tracking-wider text-gray-500 uppercase">Location</p>
-                <p class="font-medium text-gray-900">{{ selectedActivity.location }}</p>
+                <p class="max-w-60 truncate font-medium text-gray-900">
+                  {{ selectedActivity.location }}
+                </p>
               </div>
             </div>
 
@@ -265,10 +267,10 @@
 
           @if (isRegistered(selectedActivity) && !isCutoffPassed(selectedActivity)) {
             <button
-              class="border-red hover:bg-red text-red w-full cursor-pointer rounded-xl border-2 bg-white py-3 text-base font-semibold transition-colors hover:text-white"
+              class="hover:bg-red hover:border-red w-full cursor-pointer rounded-xl border-2 border-gray-300 bg-white py-3 text-base font-semibold transition-colors hover:text-white"
               (click)="cancelRegistration(selectedActivity)"
             >
-              Cancel My Registration
+              Cancel Registration
             </button>
           }
 

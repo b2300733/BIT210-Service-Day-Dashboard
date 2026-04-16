@@ -53,8 +53,22 @@
 
     <mat-form-field appearance="outline" class="w-full">
       <mat-label>Total Slots Available</mat-label>
-      <input matInput type="number" placeholder="25" formControlName="totalSlots" min="1" />
+      <input
+        matInput
+        type="number"
+        placeholder="25"
+        formControlName="totalSlots"
+        [min]="activityForm.get('registered')?.value || 1"
+      />
     </mat-form-field>
+
+    @if (
+      activityForm.errors?.['slotBelowRegistered'] && (activityForm.touched || activityForm.dirty)
+    ) {
+      <div class="text-red -mt-7 px-3 text-sm">
+        Total slots cannot be lower than the number of registered employees.
+      </div>
+    }
 
     <div class="flex gap-4">
       <mat-form-field appearance="outline" class="flex-1">

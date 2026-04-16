@@ -15,7 +15,15 @@ import {
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import {
+  ReactiveFormsModule,
+  FormBuilder,
+  FormGroup,
+  Validators,
+  AbstractControl,
+  ValidationErrors,
+  ValidatorFn,
+} from '@angular/forms';
 import { Plus, Pencil, Trash2, Calendar, MapPin, Clock } from 'lucide-angular';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ActivitiesService } from '../../../../backend/services/activities.service';
@@ -200,19 +208,33 @@ export class AddEditActivitiesDialog {
 
     this.activityForm = this.fb.group(
       {
-        name: [this.data?.name || '', Validators.required],
+        name: [this.data?.name || '', [Validators.required, this.noWhitespaceValidator()]],
         serviceType: [this.data?.serviceType || '', Validators.required],
         scheduleDate: [this.data?.scheduleDate || '', Validators.required],
         scheduleTime: [this.data?.scheduleTime || '', Validators.required],
-        location: [this.data?.location || '', Validators.required],
+        location: [this.data?.location || '', [Validators.required, this.noWhitespaceValidator()]],
         registered: [this.data?.registered || 0],
         totalSlots: [this.data?.totalSlots || 0, [Validators.required, Validators.min(1)]],
         cutoffDate: [this.data?.cutoffDate || '', Validators.required],
         cutoffTime: [this.data?.cutoffTime || '', Validators.required],
-        description: [this.data?.description || '', Validators.required],
+        description: [
+          this.data?.description || '',
+          [Validators.required, this.noWhitespaceValidator()],
+        ],
       },
-      { validators: this.cutoffBeforeScheduleValidator },
+      { validators: [this.cutoffBeforeScheduleValidator, this.slotFloorValidator] },
     );
+  }
+
+  noWhitespaceValidator(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const value = control.value;
+      if (typeof value !== 'string') {
+        return null;
+      }
+
+      return value.trim().length === 0 ? { whitespace: true } : null;
+    };
   }
 
   cutoffBeforeScheduleValidator(form: FormGroup) {
@@ -235,9 +257,29 @@ export class AddEditActivitiesDialog {
     return null;
   }
 
+  slotFloorValidator(form: FormGroup) {
+    const registered = Number(form.get('registered')?.value ?? 0);
+    const totalSlots = Number(form.get('totalSlots')?.value ?? 0);
+
+    if (Number.isFinite(registered) && Number.isFinite(totalSlots) && totalSlots < registered) {
+      return { slotBelowRegistered: true };
+    }
+
+    return null;
+  }
+
   onSubmit() {
     if (this.activityForm.valid) {
-      this.dialogRef.close(this.activityForm.value);
+      const value = this.activityForm.value;
+      this.dialogRef.close({
+        ...value,
+        name: value.name.trim(),
+        serviceType: value.serviceType.trim(),
+        location: value.location.trim(),
+        cutoffDate: value.cutoffDate.trim(),
+        cutoffTime: value.cutoffTime.trim(),
+        description: value.description.trim(),
+      });
     }
   }
 }

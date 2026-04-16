@@ -4,6 +4,9 @@ const Activity = require('../models/activity.model');
 const Registration = require('../models/registration.model');
 const User = require('../models/user.model');
 
+let broadcastInFlight = false;
+const reminderInFlight = new Set();
+
 const getApdUrl = () => process.env.AP_Url;
 
 const sendEmail = async (payload) => {
@@ -83,6 +86,28 @@ const updateReminderStatus = async (req, res) => {
   }
 };
 
+const deleteReminder = async (req, res) => {
+  try {
+    const reminder = await Reminder.findById(req.params.id);
+    if (!reminder) {
+      return res.status(404).json({ message: 'Reminder not found.' });
+    }
+
+    if (reminder.status === 'sent') {
+      return res.status(409).json({ message: 'Sent reminders cannot be deleted.' });
+    }
+
+    if (reminderInFlight.has(reminder._id.toString())) {
+      return res.status(409).json({ message: 'Reminder is currently sending. Please wait.' });
+    }
+
+    await Reminder.findByIdAndDelete(reminder._id);
+    res.json({ message: 'Reminder deleted.' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 const sendBroadcast = async (req, res) => {
   try {
     const title = req.body?.title?.trim();
@@ -92,17 +117,27 @@ const sendBroadcast = async (req, res) => {
       return res.status(400).json({ message: 'title and message are required.' });
     }
 
+    if (broadcastInFlight) {
+      return res.status(429).json({ message: 'Broadcast is already being sent. Please wait.' });
+    }
+
+    broadcastInFlight = true;
+
     const users = await User.find({ role: 'employee' }).select('email').lean();
     const emails = users.map((user) => user.email).filter(Boolean);
 
     if (!emails.length) {
+      broadcastInFlight = false;
       return res.json({ sent: 0 });
     }
 
     await Promise.all(emails.map((to) => sendEmail({ action: 'broadcast', title, message, to })));
 
+    broadcastInFlight = false;
+
     res.json({ sent: emails.length });
   } catch (err) {
+    broadcastInFlight = false;
     res.status(500).json({ message: err.message });
   }
 };
@@ -114,10 +149,21 @@ const sendReminderNow = async (req, res) => {
       return res.status(404).json({ message: 'Reminder not found.' });
     }
 
+    if (reminder.status === 'sent') {
+      return res.status(409).json({ message: 'Reminder has already been sent.' });
+    }
+
+    if (reminderInFlight.has(reminder._id.toString())) {
+      return res.status(429).json({ message: 'Reminder is already being sent. Please wait.' });
+    }
+
+    reminderInFlight.add(reminder._id.toString());
+
     const activity = await Activity.findOne({ name: reminder.activity }).select(
       'name serviceType scheduleDate scheduleTime location',
     );
     if (!activity) {
+      reminderInFlight.delete(reminder._id.toString());
       return res.status(404).json({ message: 'Activity not found.' });
     }
 
@@ -130,6 +176,7 @@ const sendReminderNow = async (req, res) => {
       .filter(Boolean);
 
     if (!emails.length) {
+      reminderInFlight.delete(reminder._id.toString());
       return res.json({ sent: 0 });
     }
 
@@ -153,8 +200,13 @@ const sendReminderNow = async (req, res) => {
       { new: true, runValidators: true },
     );
 
+    reminderInFlight.delete(reminder._id.toString());
+
     res.json({ sent: emails.length, reminder: updatedReminder });
   } catch (err) {
+    if (req.params?.id) {
+      reminderInFlight.delete(req.params.id.toString());
+    }
     res.status(500).json({ message: err.message });
   }
 };
@@ -163,6 +215,7 @@ module.exports = {
   listReminders,
   createReminder,
   updateReminderStatus,
+  deleteReminder,
   sendBroadcast,
   sendReminderNow,
 };

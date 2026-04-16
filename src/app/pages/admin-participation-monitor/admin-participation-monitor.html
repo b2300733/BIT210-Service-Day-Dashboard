@@ -26,11 +26,11 @@
             <mat-panel-title class="flex w-full flex-col gap-3">
               <div class="flex w-full items-center justify-between">
                 <div class="flex flex-col gap-0.5">
-                  <div class="text-sm font-medium">{{ activity.name }}</div>
+                  <div class="max-w-110 truncate text-sm font-medium">{{ activity.name }}</div>
                   <div class="text-xs text-gray-600">
-                    <span
+                    <span class="flex"
                       >{{ activity.scheduleDate }} at {{ activity.scheduleTime }} -
-                      {{ activity.location }}</span
+                      <span class="block max-w-80 truncate">{{ activity.location }}</span></span
                     >
                   </div>
                 </div>

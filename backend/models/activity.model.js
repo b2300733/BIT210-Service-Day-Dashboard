@@ -16,4 +16,10 @@ const activitySchema = new mongoose.Schema(
   { timestamps: true },
 );
 
+activitySchema.pre('findByIdAndDelete', async function (next) {
+  const Registration = mongoose.model('Registration');
+  await Registration.deleteMany({ activityId: this.getFilter()._id });
+  next();
+});
+
 module.exports = mongoose.model('Activity', activitySchema);
