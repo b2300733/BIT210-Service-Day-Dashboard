@@ -64,10 +64,6 @@ export class AdminQrPage implements OnInit, OnDestroy {
   showScanOverlay = false;
   scanMessage = '';
   private scanner: QrScanner | null = null;
-  private readonly qrWorkerPath = new URL(
-    '../../../../qr-scanner-worker',
-    import.meta.url,
-  ).toString();
 
   constructor() {
     this.dataSource.sortingDataAccessor = (row, column) => {
@@ -111,7 +107,6 @@ export class AdminQrPage implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    QrScanner.WORKER_PATH = this.qrWorkerPath;
     this.activitiesService.fetchActivities().subscribe({
       next: (activities) => {
         this.activities = activities;

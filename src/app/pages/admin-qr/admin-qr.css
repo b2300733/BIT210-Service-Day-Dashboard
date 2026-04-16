@@ -13,3 +13,73 @@
 .scan-line {
   animation: scan-line 2s ease-in-out infinite;
 }
+
+.scan-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.scan-dim {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.scan-frame {
+  position: relative;
+  width: min(70vw, 360px);
+  height: min(70vw, 360px);
+  border-radius: 16px;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.65);
+}
+
+.scan-corner {
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  border-color: #fff;
+}
+
+.scan-corner.top-left {
+  top: 0;
+  left: 0;
+  border-top: 4px solid #fff;
+  border-left: 4px solid #fff;
+  border-top-left-radius: 12px;
+}
+
+.scan-corner.top-right {
+  top: 0;
+  right: 0;
+  border-top: 4px solid #fff;
+  border-right: 4px solid #fff;
+  border-top-right-radius: 12px;
+}
+
+.scan-corner.bottom-left {
+  bottom: 0;
+  left: 0;
+  border-bottom: 4px solid #fff;
+  border-left: 4px solid #fff;
+  border-bottom-left-radius: 12px;
+}
+
+.scan-corner.bottom-right {
+  right: 0;
+  bottom: 0;
+  border-right: 4px solid #fff;
+  border-bottom: 4px solid #fff;
+  border-bottom-right-radius: 12px;
+}
+
+.scan-frame .scan-line {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  height: 2px;
+  opacity: 0.9;
+  box-shadow: 0 0 8px 2px var(--color-primary);
+}
