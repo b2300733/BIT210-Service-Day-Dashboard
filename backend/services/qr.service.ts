@@ -16,6 +16,12 @@ export interface CheckInRecord {
   qrData: string | null;
 }
 
+export interface CheckInResponse {
+  valid: boolean;
+  message?: string;
+  record?: CheckInRecord;
+}
+
 const API_URL = 'http://localhost:3000/api/registrations';
 
 @Injectable({ providedIn: 'root' })
@@ -32,8 +38,8 @@ export class QrService {
     return this.http.post<CheckInRecord[]>(`${API_URL}/generate-qr`, { activityId });
   }
 
-  checkInByQr(qrData: string): Observable<CheckInRecord> {
-    return this.http.post<CheckInRecord>(`${API_URL}/check-in`, { qrData });
+  checkInByQr(activityId: string, qrData: string): Observable<CheckInResponse> {
+    return this.http.post<CheckInResponse>(`${API_URL}/check-in`, { activityId, qrData });
   }
 
   downloadQr(record: CheckInRecord): void {
