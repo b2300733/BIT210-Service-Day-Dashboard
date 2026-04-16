@@ -66,6 +66,7 @@ export class AdminQrPage implements OnInit, OnDestroy {
   scanStatus: 'idle' | 'scanning' | 'success' | 'error' = 'idle';
   private scanner: QrScanner | null = null;
   private lastDecodeErrorAt = 0;
+  private successMessageTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
     this.dataSource.sortingDataAccessor = (row, column) => {
@@ -168,6 +169,7 @@ export class AdminQrPage implements OnInit, OnDestroy {
   closeScanOverlay(): void {
     this.showScanOverlay = false;
     this.scanStatus = 'idle';
+    this.clearSuccessMessageTimer();
     this.stopScanner();
   }
 
@@ -245,6 +247,13 @@ export class AdminQrPage implements OnInit, OnDestroy {
         this.dataSource.data = nextRows;
         this.scanStatus = 'success';
         this.scanMessage = `Checked in: ${updated.employeeName}`;
+        this.clearSuccessMessageTimer();
+        this.successMessageTimer = setTimeout(() => {
+          if (!this.showScanOverlay) return;
+          this.scanStatus = 'scanning';
+          this.scanMessage = 'Scanning for QR codes...';
+          this.successMessageTimer = null;
+        }, 1500);
       },
       error: (err) => {
         console.error('Failed to check in:', err);
@@ -261,6 +270,13 @@ export class AdminQrPage implements OnInit, OnDestroy {
     if (this.scanStatus !== 'success') {
       this.scanStatus = 'scanning';
       this.scanMessage = 'Scanning for QR codes...';
+    }
+  }
+
+  private clearSuccessMessageTimer(): void {
+    if (this.successMessageTimer) {
+      clearTimeout(this.successMessageTimer);
+      this.successMessageTimer = null;
     }
   }
 }
