@@ -64,7 +64,7 @@
               <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <div class="flex items-center gap-2">
-                    <p class="font-medium text-gray-900">{{ activity.title }}</p>
+                    <p class="max-w-80 truncate font-medium text-gray-900">{{ activity.title }}</p>
                     @if (activity.isCheckedIn) {
                       <div
                         class="text-green inline-flex items-center gap-1 rounded-full border border-transparent bg-[#eaf6f0] px-2.5 py-0.5 text-xs font-semibold"
@@ -86,13 +86,19 @@
                     </span>
                     <span class="flex items-center gap-1">
                       <lucide-icon [img]="MapPin" class="h-3 w-3"></lucide-icon>
-                      {{ activity.location }}
+                      <span class="max-w-70 truncate">{{ activity.location }}</span>
                     </span>
                   </div>
 
                   @if (activity.isCheckedIn) {
-                    <p class="text-green mt-2 text-xs font-medium">
-                      Arrived at: {{ activity.checkInTime }}
+                    <p class="text-green mt-1 text-xs font-medium">
+                      Checked In: {{ activity.checkInDate }} at {{ activity.checkInTime }}
+                    </p>
+                  }
+
+                  @if (!activity.qrData && !activity.isCheckedIn) {
+                    <p class="mt-1 text-xs font-medium text-gray-500">
+                      QR code has not been generated yet for this registration.
                     </p>
                   }
                 </div>
@@ -115,12 +121,6 @@
                   </button>
                 }
               </div>
-
-              @if (!activity.qrData && !activity.isCheckedIn) {
-                <p class="text-xs text-gray-500">
-                  QR code has not been generated yet for this registration.
-                </p>
-              }
 
               @if (activity.showQr && !activity.isCheckedIn) {
                 <div

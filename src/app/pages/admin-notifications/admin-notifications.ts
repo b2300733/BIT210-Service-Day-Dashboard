@@ -108,7 +108,7 @@ export class AdminNotificationsPage implements AfterViewInit, OnInit, OnDestroy 
 
     this.remindersService.listReminders().subscribe({
       next: (reminders) => {
-        this.dataSource.data = reminders;
+        this.dataSource.data = reminders.map((reminder) => this.normalizeReminder(reminder));
       },
       error: (err) => {
         console.error('Fetch reminders error:', err);
@@ -140,7 +140,7 @@ export class AdminNotificationsPage implements AfterViewInit, OnInit, OnDestroy 
 
     this.remindersService.createReminder(payload).subscribe({
       next: (created) => {
-        this.dataSource.data = [...this.dataSource.data, created];
+        this.dataSource.data = [...this.dataSource.data, this.normalizeReminder(created)];
         this.scheduleForm.patchValue({ activity: '' });
         this.showSnackbar('Reminder scheduled successfully.');
       },
@@ -198,7 +198,7 @@ export class AdminNotificationsPage implements AfterViewInit, OnInit, OnDestroy 
         const updatedReminder = result.reminder;
         if (updatedReminder) {
           this.dataSource.data = this.dataSource.data.map((item) =>
-            item._id === updatedReminder._id ? updatedReminder : item,
+            item._id === updatedReminder._id ? this.normalizeReminder(updatedReminder) : item,
           );
         }
 
@@ -259,5 +259,30 @@ export class AdminNotificationsPage implements AfterViewInit, OnInit, OnDestroy 
     }
 
     return fallback;
+  }
+
+  private normalizeReminder(reminder: ScheduledReminder): ScheduledReminder {
+    return {
+      ...reminder,
+      scheduledFor: this.formatDateTime(reminder.scheduledFor),
+    };
+  }
+
+  private formatDateTime(value: string): string {
+    if (!value) {
+      return '';
+    }
+
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) {
+      return value;
+    }
+
+    const year = parsed.getFullYear();
+    const month = String(parsed.getMonth() + 1).padStart(2, '0');
+    const day = String(parsed.getDate()).padStart(2, '0');
+    const hours = String(parsed.getHours()).padStart(2, '0');
+    const minutes = String(parsed.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day} ${hours}:${minutes}`;
   }
 }

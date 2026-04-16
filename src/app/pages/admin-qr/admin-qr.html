@@ -188,7 +188,7 @@
               Checked In At
             </th>
             <td mat-cell *matCellDef="let row" class="py-4 text-gray-600">
-              {{ row.checkedInAt ?? '--' }}
+              {{ formatCheckedInAt(row.checkedInAt) }}
             </td>
           </ng-container>
 

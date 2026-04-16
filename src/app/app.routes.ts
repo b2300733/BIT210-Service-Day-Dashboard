@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { LoginPage } from './pages/login/login';
+import { authGuard, loginGuard, roleChildGuard, roleGuard } from './auth.guard';
 
 import { AdminDashboardPage } from './pages/admin-dashboard/admin-dashboard';
 import { AdminActivitiesPage } from './pages/admin-activities/admin-activities';
@@ -14,10 +15,12 @@ import { EmployeeRegistrationsComponent } from './pages/employee-registrations/e
 import { EmployeeCheckinComponent } from './pages/employee-qr/employee-qr';
 
 export const routes: Routes = [
-  { path: '', component: LoginPage },
+  { path: '', component: LoginPage, canActivate: [loginGuard] },
   {
     path: 'admin-dashboard',
     component: AdminDashboardPage,
+    canActivate: [authGuard, roleGuard('admin')],
+    canActivateChild: [roleChildGuard('admin')],
     children: [
       { path: '', redirectTo: 'activities', pathMatch: 'full' },
       { path: 'activities', component: AdminActivitiesPage },
@@ -30,6 +33,8 @@ export const routes: Routes = [
   {
     path: 'employee-dashboard',
     component: EmployeeDashboardPage,
+    canActivate: [authGuard, roleGuard('employee')],
+    canActivateChild: [roleChildGuard('employee')],
     children: [
       { path: '', redirectTo: 'browse', pathMatch: 'full' },
       { path: 'browse', component: EmployeeActivitiesComponent },
@@ -37,5 +42,6 @@ export const routes: Routes = [
       { path: 'qr-checkin', component: EmployeeCheckinComponent },
     ],
   },
-  { path: 'login', component: LoginPage },
+  { path: 'login', component: LoginPage, canActivate: [loginGuard] },
+  { path: '**', redirectTo: '/login' },
 ];
