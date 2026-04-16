@@ -104,13 +104,15 @@
           <ng-container matColumnDef="qr">
             <th mat-header-cell *matHeaderCellDef class="text-gray-600">QR Code</th>
             <td mat-cell *matCellDef="let row" class="py-4">
-              @if (row.qrImageUrl) {
+              @if (row.qrData) {
                 <div class="flex items-center gap-2">
-                  <img
-                    [src]="row.qrImageUrl"
-                    [alt]="row.qrData"
-                    class="h-16 w-16 rounded border border-gray-200"
-                  />
+                  <qrcode
+                    [qrdata]="row.qrData!"
+                    [width]="64"
+                    [errorCorrectionLevel]="'M'"
+                    [margin]="1"
+                    class="rounded border border-gray-200"
+                  ></qrcode>
                   <button
                     mat-stroked-button
                     type="button"
@@ -227,6 +229,12 @@
     </div>
 
     <div class="relative h-72 w-72 rounded-lg" (click)="$event.stopPropagation()">
+      <video
+        #qrVideo
+        muted
+        playsinline
+        class="absolute inset-0 h-full w-full rounded-lg object-cover"
+      ></video>
       <div class="absolute inset-0 rounded-lg shadow-[0_0_0_9999px_rgba(0,0,0,0.65)]"></div>
 
       <span
@@ -247,7 +255,9 @@
       ></div>
     </div>
 
-    <p class="mt-8 text-sm text-white/70">Position the QR code inside the frame</p>
+    <p class="mt-8 text-sm text-white/70">
+      {{ scanMessage || 'Position the QR code inside the frame' }}
+    </p>
   </div>
 }
 
@@ -273,11 +283,13 @@
         <p class="text-xs text-gray-600">{{ selectedQrRecord.email }}</p>
       </div>
 
-      <img
-        [src]="selectedQrRecord.qrImageUrl!.replace('120x120', '280x280')"
-        [alt]="selectedQrRecord.qrData"
+      <qrcode
+        [qrdata]="selectedQrRecord.qrData!"
+        [width]="280"
+        [errorCorrectionLevel]="'M'"
+        [margin]="1"
         class="rounded-lg border border-gray-200"
-      />
+      ></qrcode>
 
       <p class="text-xs text-gray-600">{{ selectedQrRecord.qrData }}</p>
 

@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const crypto = require('crypto');
 const Registration = require('../models/registration.model');
 const Activity = require('../models/activity.model');
 const User = require('../models/user.model');
@@ -14,6 +15,26 @@ const formatDateParts = (value) => {
   const timePart = `${pad(date.getHours())}:${pad(date.getMinutes())}`;
   return { date: datePart, time: timePart };
 };
+
+const mapCheckInRecords = (registrations) =>
+  registrations
+    .filter((registration) => registration.employeeId && registration.activityId)
+    .map((registration) => ({
+      _id: registration._id,
+      employeeId: registration.employeeId._id,
+      employeeName: registration.employeeId.name,
+      email: registration.employeeId.email,
+      department: registration.employeeId.department,
+      activityId: registration.activityId._id,
+      activityName: registration.activityId.name,
+      qrData: registration.qrData ?? null,
+      qrchecked: Boolean(registration.qrchecked),
+      status: registration.qrchecked ? 'checked-in' : 'pending',
+      checkedInAt: registration.checkedInAt ? registration.checkedInAt.toISOString() : null,
+    }));
+
+const buildQrPayload = (activityId, employeeId) =>
+  `serviceday:${activityId}:${employeeId}:${crypto.randomUUID()}`;
 
 const listRegistrations = async (req, res) => {
   try {
@@ -71,7 +92,17 @@ const listRegistrationsWithActivity = async (req, res) => {
 
 const listRegistrationsWithEmployee = async (req, res) => {
   try {
-    const registrations = await Registration.find()
+    const activityId = req.query.activityId?.trim();
+    const filters = {};
+
+    if (activityId) {
+      if (!mongoose.Types.ObjectId.isValid(activityId)) {
+        return res.status(400).json({ message: 'activityId must be a valid id.' });
+      }
+      filters.activityId = activityId;
+    }
+
+    const registrations = await Registration.find(filters)
       .populate({ path: 'employeeId', select: 'name email department' })
       .populate({ path: 'activityId', select: 'name' })
       .select('-__v')
@@ -89,10 +120,92 @@ const listRegistrationsWithEmployee = async (req, res) => {
           activity: registration.activityId.name,
           registeredDate: date,
           registeredTime: time,
+          qrData: registration.qrData ?? null,
+          qrchecked: Boolean(registration.qrchecked),
+          checkedInAt: registration.checkedInAt ? registration.checkedInAt.toISOString() : null,
         };
       });
 
     res.json(result);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+const checkInByQrData = async (req, res) => {
+  try {
+    const qrData = req.body?.qrData?.trim();
+    if (!qrData) {
+      return res.status(400).json({ message: 'qrData is required.' });
+    }
+
+    const registration = await Registration.findOne({ qrData })
+      .populate({ path: 'employeeId', select: 'name email department' })
+      .populate({ path: 'activityId', select: 'name' });
+
+    if (!registration) {
+      return res.status(404).json({ message: 'QR code not found.' });
+    }
+
+    if (!registration.qrchecked) {
+      registration.qrchecked = true;
+      registration.checkedInAt = new Date();
+      await registration.save();
+    }
+
+    res.json(mapCheckInRecords([registration])[0]);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+const generateQrCodesForActivity = async (req, res) => {
+  try {
+    const activityId = req.body?.activityId?.trim();
+    if (!activityId) {
+      return res.status(400).json({ message: 'activityId is required.' });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(activityId)) {
+      return res.status(400).json({ message: 'activityId must be a valid id.' });
+    }
+
+    const activityExists = await Activity.exists({ _id: activityId });
+    if (!activityExists) {
+      return res.status(404).json({ message: 'Activity not found.' });
+    }
+
+    const registrations = await Registration.find({ activityId })
+      .populate({ path: 'employeeId', select: 'name email department' })
+      .populate({ path: 'activityId', select: 'name' })
+      .select('-__v')
+      .lean();
+
+    const updates = registrations
+      .filter((registration) => !registration.qrData)
+      .map((registration) => ({
+        updateOne: {
+          filter: { _id: registration._id, qrData: { $in: [null, undefined] } },
+          update: {
+            $set: {
+              qrData: buildQrPayload(activityId, registration.employeeId._id),
+              qrGeneratedAt: new Date(),
+            },
+          },
+        },
+      }));
+
+    if (updates.length > 0) {
+      await Registration.bulkWrite(updates);
+    }
+
+    const refreshed = await Registration.find({ activityId })
+      .populate({ path: 'employeeId', select: 'name email department' })
+      .populate({ path: 'activityId', select: 'name' })
+      .select('-__v')
+      .lean();
+
+    res.json(mapCheckInRecords(refreshed));
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -188,6 +301,8 @@ module.exports = {
   listRegistrations,
   listRegistrationsWithActivity,
   listRegistrationsWithEmployee,
+  generateQrCodesForActivity,
+  checkInByQrData,
   createRegistration,
   deleteRegistration,
 };

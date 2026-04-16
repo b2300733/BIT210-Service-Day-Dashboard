@@ -1,50 +1,43 @@
-import { Injectable } from '@angular/core';
-import { ACTIVITIES_DATA, Activity, EMPLOYEE_REGISTRATIONS_DATA } from '../data/activities.data';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
 
 export interface CheckInRecord {
+  _id?: string;
+  employeeId?: string;
   employeeName: string;
   email: string;
+  department?: string;
+  activityId?: string;
+  activityName?: string;
+  qrchecked?: boolean;
   status: 'pending' | 'checked-in';
   checkedInAt: string | null;
-  qrData: string;
-  qrImageUrl: string | null;
+  qrData: string | null;
 }
+
+const API_URL = 'http://localhost:3000/api/registrations';
 
 @Injectable({ providedIn: 'root' })
 export class QrService {
-  private readonly activities = ACTIVITIES_DATA;
-  private qrGeneratedActivities = new Set<string>();
+  private http = inject(HttpClient);
 
-  isQrGenerated(activityName: string): boolean {
-    return this.qrGeneratedActivities.has(activityName);
+  getCheckInRecords(activityId: string): Observable<CheckInRecord[]> {
+    return this.http.get<CheckInRecord[]>(
+      `${API_URL}/with-employee?activityId=${encodeURIComponent(activityId)}`,
+    );
   }
 
-  getCheckInRecords(activity: Activity): CheckInRecord[] {
-    const actIdx = this.activities.indexOf(activity);
-    const alreadyGenerated = this.qrGeneratedActivities.has(activity.name);
-    return EMPLOYEE_REGISTRATIONS_DATA.filter((r) => r.activity === activity.name).map((r) => {
-      const slug = r.employeeName.toLowerCase().replace(/\s+/g, '-');
-      const qrData = `serviceday-checkin:act-${actIdx + 1}:emp-${slug}`;
-      return {
-        employeeName: r.employeeName,
-        email: slug.replace(/-/g, '.') + '@company.com',
-        status: 'pending' as const,
-        checkedInAt: null,
-        qrData,
-        qrImageUrl: alreadyGenerated ? this.buildQrUrl(qrData, 120) : null,
-      };
-    });
+  generateQrCodes(activityId: string): Observable<CheckInRecord[]> {
+    return this.http.post<CheckInRecord[]>(`${API_URL}/generate-qr`, { activityId });
   }
 
-  generateQrCodes(activity: Activity, records: CheckInRecord[]): CheckInRecord[] {
-    this.qrGeneratedActivities.add(activity.name);
-    return records.map((r) => ({
-      ...r,
-      qrImageUrl: this.buildQrUrl(r.qrData, 120),
-    }));
+  checkInByQr(qrData: string): Observable<CheckInRecord> {
+    return this.http.post<CheckInRecord>(`${API_URL}/check-in`, { qrData });
   }
 
   downloadQr(record: CheckInRecord): void {
+    if (!record.qrData) return;
     const link = document.createElement('a');
     link.href = this.buildQrUrl(record.qrData, 400, 'png');
     link.download = `qr-${record.employeeName.replace(/\s+/g, '-').toLowerCase()}.png`;

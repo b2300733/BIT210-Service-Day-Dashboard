@@ -7,6 +7,8 @@ export interface Registration {
   _id?: string;
   employeeId: string;
   activityId: string;
+  qrData?: string | null;
+  qrGeneratedAt?: string | null;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -37,6 +39,7 @@ export interface EmployeeRegistration {
   activity: string;
   registeredDate: string;
   registeredTime: string;
+  qrData?: string | null;
 }
 
 export interface RegistrationTimeline {
