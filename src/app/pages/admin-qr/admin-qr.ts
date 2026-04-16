@@ -66,6 +66,7 @@ export class AdminQrPage implements OnInit, OnDestroy {
   scanStatus: 'idle' | 'scanning' | 'success' | 'error' = 'idle';
   private scanner: QrScanner | null = null;
   private lastDecodeErrorAt = 0;
+  private lastScanErrorAt = 0;
 
   constructor() {
     this.dataSource.sortingDataAccessor = (row, column) => {
@@ -227,6 +228,7 @@ export class AdminQrPage implements OnInit, OnDestroy {
     if (!data.startsWith(expectedPrefix)) {
       this.scanStatus = 'error';
       this.scanMessage = 'This QR code is for a different activity.';
+      this.lastScanErrorAt = Date.now();
       return;
     }
 
@@ -234,6 +236,7 @@ export class AdminQrPage implements OnInit, OnDestroy {
     if (!match) {
       this.scanStatus = 'error';
       this.scanMessage = 'QR code not found in this activity list.';
+      this.lastScanErrorAt = Date.now();
       return;
     }
 
@@ -250,6 +253,7 @@ export class AdminQrPage implements OnInit, OnDestroy {
         console.error('Failed to check in:', err);
         this.scanStatus = 'error';
         this.scanMessage = 'Check-in failed. Please try again.';
+        this.lastScanErrorAt = Date.now();
       },
     });
   }
@@ -258,7 +262,7 @@ export class AdminQrPage implements OnInit, OnDestroy {
     const now = Date.now();
     if (now - this.lastDecodeErrorAt < 1200) return;
     this.lastDecodeErrorAt = now;
-    if (this.scanStatus !== 'success') {
+    if (this.scanStatus !== 'success' && now - this.lastScanErrorAt > 1500) {
       this.scanStatus = 'scanning';
       this.scanMessage = 'Scanning for QR codes...';
     }
