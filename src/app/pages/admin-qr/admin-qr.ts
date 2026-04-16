@@ -68,6 +68,7 @@ export class AdminQrPage implements OnInit, OnDestroy {
   private lastDecodeErrorAt = 0;
   private statusHoldUntil = 0;
   private statusResetTimer: ReturnType<typeof setTimeout> | null = null;
+  private isChecking = false;
 
   constructor() {
     this.dataSource.sortingDataAccessor = (row, column) => {
@@ -222,8 +223,15 @@ export class AdminQrPage implements OnInit, OnDestroy {
     const activityId = this.selectedActivity?._id;
     if (!activityId) return;
 
+    if (this.isChecking || Date.now() < this.statusHoldUntil) {
+      return;
+    }
+
+    this.isChecking = true;
+
     this.qrService.checkInByQr(activityId, data).subscribe({
       next: (response: CheckInResponse) => {
+        this.isChecking = false;
         if (!response.valid || !response.record) {
           this.setScanStatus(
             'error',
@@ -242,6 +250,7 @@ export class AdminQrPage implements OnInit, OnDestroy {
       },
       error: (err) => {
         console.error('Failed to check in:', err);
+        this.isChecking = false;
         this.setScanStatus('error', 'Check-in failed. Please try again.', 1500);
       },
     });
