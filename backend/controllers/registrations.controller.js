@@ -136,16 +136,24 @@ const listRegistrationsWithEmployee = async (req, res) => {
 const checkInByQrData = async (req, res) => {
   try {
     const qrData = req.body?.qrData?.trim();
+    const activityId = req.body?.activityId?.trim();
     if (!qrData) {
       return res.status(400).json({ message: 'qrData is required.' });
     }
+    if (!activityId) {
+      return res.status(400).json({ message: 'activityId is required.' });
+    }
 
-    const registration = await Registration.findOne({ qrData })
+    if (!mongoose.Types.ObjectId.isValid(activityId)) {
+      return res.status(400).json({ message: 'activityId must be a valid id.' });
+    }
+
+    const registration = await Registration.findOne({ qrData, activityId })
       .populate({ path: 'employeeId', select: 'name email department' })
       .populate({ path: 'activityId', select: 'name' });
 
     if (!registration) {
-      return res.status(404).json({ message: 'QR code not found.' });
+      return res.status(404).json({ message: 'Invalid QR code for this activity.' });
     }
 
     if (!registration.qrchecked) {

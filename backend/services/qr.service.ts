@@ -32,8 +32,8 @@ export class QrService {
     return this.http.post<CheckInRecord[]>(`${API_URL}/generate-qr`, { activityId });
   }
 
-  checkInByQr(qrData: string): Observable<CheckInRecord> {
-    return this.http.post<CheckInRecord>(`${API_URL}/check-in`, { qrData });
+  checkInByQr(activityId: string, qrData: string): Observable<CheckInRecord> {
+    return this.http.post<CheckInRecord>(`${API_URL}/check-in`, { activityId, qrData });
   }
 
   downloadQr(record: CheckInRecord): void {

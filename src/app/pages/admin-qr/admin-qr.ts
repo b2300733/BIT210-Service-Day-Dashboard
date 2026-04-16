@@ -222,19 +222,7 @@ export class AdminQrPage implements OnInit, OnDestroy {
     const activityId = this.selectedActivity?._id;
     if (!activityId) return;
 
-    const expectedPrefix = `serviceday:${activityId}:`;
-    if (!data.startsWith(expectedPrefix)) {
-      this.setScanStatus('error', 'This QR code is for a different activity.', 1500);
-      return;
-    }
-
-    const match = this.dataSource.data.find((record) => record.qrData === data);
-    if (!match) {
-      this.setScanStatus('error', 'QR code not found in this activity list.', 1500);
-      return;
-    }
-
-    this.qrService.checkInByQr(data).subscribe({
+    this.qrService.checkInByQr(activityId, data).subscribe({
       next: (updated) => {
         const nextRows = this.dataSource.data.map((row) =>
           row.qrData === updated.qrData ? { ...row, ...updated } : row,
@@ -244,7 +232,12 @@ export class AdminQrPage implements OnInit, OnDestroy {
       },
       error: (err) => {
         console.error('Failed to check in:', err);
-        this.setScanStatus('error', 'Check-in failed. Please try again.', 1500);
+        const serverMessage = err?.error?.message;
+        const message =
+          typeof serverMessage === 'string' && serverMessage.length > 0
+            ? serverMessage
+            : 'Check-in failed. Please try again.';
+        this.setScanStatus('error', message, 1500);
       },
     });
   }
