@@ -18,7 +18,7 @@ import { provideNativeDateAdapter } from '@angular/material/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { Chart, registerables } from 'chart.js';
 import { ActivitiesService } from '../../../../backend/services/activities.service';
-import { Activity } from '../../../../backend/data/activities.data';
+import { Activity } from '../../models/activity.model';
 import {
   EmployeeRegistration,
   RegistrationTimeline,

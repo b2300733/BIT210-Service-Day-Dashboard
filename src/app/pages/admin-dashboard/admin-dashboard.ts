@@ -6,7 +6,7 @@ import { AdminNavbarComponent } from '../../components/admin-navbar/admin-navbar
 import { ActivitiesService } from '../../../../backend/services/activities.service';
 import { HeaderComponent } from '../../components/header/header';
 import { COMMON_PAGES_MODULES } from '../../module/common.pages.module';
-import { Activity } from '../../../../backend/data/activities.data';
+import { Activity } from '../../models/activity.model';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -31,12 +31,15 @@ export class AdminDashboardPage implements OnInit {
     const activities = this.activities();
     const totalSlots = activities.reduce((sum, activity) => sum + activity.totalSlots, 0);
     const totalRegistered = activities.reduce((sum, activity) => sum + activity.registered, 0);
+    const totalAvailable = activities
+      .filter((activity) => this.activitiesService.getActivityStatus(activity) === 'Open')
+      .reduce((sum, activity) => sum + Math.max(activity.totalSlots - activity.registered, 0), 0);
 
     return {
       totalActivities: activities.length,
       totalSlots,
       totalRegistered,
-      totalAvailable: totalSlots - totalRegistered,
+      totalAvailable,
     };
   });
 

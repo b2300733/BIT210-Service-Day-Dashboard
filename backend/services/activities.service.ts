@@ -84,13 +84,15 @@ export class ActivitiesService {
 
   getStatistics() {
     const activities = this.activitiesSubject.value;
+    const totalAvailable = activities
+      .filter((activity) => this.getActivityStatus(activity) === 'Open')
+      .reduce((sum, activity) => sum + Math.max(activity.totalSlots - activity.registered, 0), 0);
+
     return {
       totalActivities: activities.length,
       totalSlots: activities.reduce((sum, a) => sum + a.totalSlots, 0),
       totalRegistered: activities.reduce((sum, a) => sum + a.registered, 0),
-      get totalAvailable() {
-        return this.totalSlots - this.totalRegistered;
-      },
+      totalAvailable,
     };
   }
 
