@@ -231,7 +231,9 @@ export class AdminQrPage implements OnInit, OnDestroy {
         this.setScanStatus('success', `Checked in: ${updated.employeeName}`, 1500);
       },
       error: (err) => {
-        console.error('Failed to check in:', err);
+        if (err?.status !== 404) {
+          console.error('Failed to check in:', err);
+        }
         const serverMessage = err?.error?.message;
         const message =
           typeof serverMessage === 'string' && serverMessage.length > 0
