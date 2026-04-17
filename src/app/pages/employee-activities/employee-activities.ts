@@ -21,7 +21,7 @@ import {
   CheckCircle,
   X,
   AlertTriangle,
-} from 'lucide-angular'; // <-- Added AlertTriangle
+} from 'lucide-angular';
 import { ActivitiesService } from '../../../../backend/services/activities.service';
 import { AuthService } from '../../../../backend/services/auth.service';
 import { RegistrationsService } from '../../../../backend/services/registrations.service';
@@ -54,7 +54,6 @@ export class EmployeeActivitiesComponent implements OnInit {
   searchTerm = '';
   selectedActivity: Activity | null = null;
 
-  // Tracks conflicting activities to trigger the warning modal
   conflictWarning: { attempting: Activity; existing: Activity } | null = null;
 
   activities: Activity[] = [];
@@ -126,7 +125,6 @@ export class EmployeeActivitiesComponent implements OnInit {
       return;
     }
 
-    // 1. Check if the user is already registered for an event on this same date
     const existingRegistration = this.activities.find(
       (a) =>
         this.isRegistered(a) &&
@@ -134,14 +132,11 @@ export class EmployeeActivitiesComponent implements OnInit {
         this.getActivityKey(a) !== this.getActivityKey(activity),
     );
 
-    // 2. If a conflict exists, show the warning modal and stop the registration
     if (existingRegistration) {
       console.log('Conflict found! Already registered for:', existingRegistration.name);
 
-      // Close the details modal (if open) so they don't overlap
       this.selectedActivity = null;
 
-      // Trigger the warning modal
       this.conflictWarning = {
         attempting: activity,
         existing: existingRegistration,
@@ -149,7 +144,6 @@ export class EmployeeActivitiesComponent implements OnInit {
       return;
     }
 
-    // 3. Otherwise, proceed with registration
     console.log('Registration successful!');
     this.ensureEmployeeId().subscribe((employeeId) => {
       if (!employeeId || !activity._id) {
@@ -207,7 +201,6 @@ export class EmployeeActivitiesComponent implements OnInit {
     });
   }
 
-  // Closes the conflict warning modal
   closeConflictWarning() {
     this.conflictWarning = null;
   }
