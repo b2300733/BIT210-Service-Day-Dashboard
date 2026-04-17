@@ -9,7 +9,8 @@ import {
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { forkJoin, of } from 'rxjs';
+import { forkJoin, interval, of } from 'rxjs';
+import { startWith, switchMap } from 'rxjs/operators';
 import { AuthService } from '../../../../backend/services/auth.service';
 import {
   RegistrationsService,
@@ -123,6 +124,7 @@ export class EmployeeCheckinComponent {
   isScanSuccessful = signal(false);
 
   activities: CheckInActivity[] = [];
+  private employeeId: string | null = null;
 
   constructor() {
     this.ensureEmployeeId().subscribe((employeeId) => {
@@ -133,17 +135,20 @@ export class EmployeeCheckinComponent {
         return;
       }
 
-      forkJoin({
-        registrationsWithActivity:
-          this.registrationsService.listRegistrationsWithActivity(employeeId),
-        registrations: this.registrationsService.listRegistrations(employeeId),
-      })
-        .pipe(takeUntilDestroyed(this.destroyRef))
+      this.employeeId = employeeId;
+
+      interval(8000)
+        .pipe(
+          startWith(0),
+          switchMap(() => this.loadActivities(employeeId)),
+          takeUntilDestroyed(this.destroyRef),
+        )
         .subscribe({
-          next: ({ registrationsWithActivity, registrations }) => {
-            this.activities = this.mapActivities(registrationsWithActivity, registrations);
+          next: (nextActivities) => {
+            this.activities = nextActivities;
             this.isLoading = false;
             this.loadError = '';
+            this.updateEnlargedQrState();
             this.changeDetectorRef.markForCheck();
           },
           error: (err) => {
@@ -279,5 +284,32 @@ export class EmployeeCheckinComponent {
     }
 
     return this.authService.fetchUserId(current.email);
+  }
+
+  private loadActivities(employeeId: string) {
+    return forkJoin({
+      registrationsWithActivity:
+        this.registrationsService.listRegistrationsWithActivity(employeeId),
+      registrations: this.registrationsService.listRegistrations(employeeId),
+    }).pipe(
+      switchMap(({ registrationsWithActivity, registrations }) =>
+        of(this.mapActivities(registrationsWithActivity, registrations)),
+      ),
+    );
+  }
+
+  private updateEnlargedQrState() {
+    if (!this.enlargedQrActivity) {
+      return;
+    }
+
+    const updated = this.activities.find(
+      (activity) => activity.activityId === this.enlargedQrActivity?.activityId,
+    );
+
+    if (updated?.isCheckedIn) {
+      this.enlargedQrActivity = updated;
+      this.isScanSuccessful.set(true);
+    }
   }
 }
