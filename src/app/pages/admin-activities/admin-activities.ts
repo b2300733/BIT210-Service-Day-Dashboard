@@ -57,6 +57,11 @@ export class AdminActivitiesPage implements AfterViewInit, OnInit {
   }
 
   openDelete(element: Activity) {
+    if (this.isCutoffPassed(element)) {
+      this.showSnackbar('Cutoff has passed. Activity cannot be deleted.');
+      return;
+    }
+
     const dialogRef = this.dialog.open(DeleteActivitiesDialog, {
       data: element,
     });
@@ -77,6 +82,11 @@ export class AdminActivitiesPage implements AfterViewInit, OnInit {
   }
 
   openAddEdit(element?: Activity) {
+    if (element && this.isCutoffPassed(element)) {
+      this.showSnackbar('Cutoff has passed. Activity cannot be edited.');
+      return;
+    }
+
     const dialogRef = this.dialog.open(AddEditActivitiesDialog, {
       data: element,
     });
@@ -169,6 +179,15 @@ export class AdminActivitiesPage implements AfterViewInit, OnInit {
 
   getStatus(activity: Activity): string {
     return this.activitiesService.getActivityStatus(activity);
+  }
+
+  isCutoffPassed(activity: Activity): boolean {
+    if (!activity?.cutoffDate || !activity?.cutoffTime) {
+      return false;
+    }
+
+    const cutoffDateTime = new Date(`${activity.cutoffDate}T${activity.cutoffTime}`);
+    return Number.isNaN(cutoffDateTime.getTime()) ? false : cutoffDateTime < new Date();
   }
 }
 

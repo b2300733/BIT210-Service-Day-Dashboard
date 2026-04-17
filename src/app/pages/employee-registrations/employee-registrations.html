@@ -63,14 +63,20 @@
           </div>
           <button
             (click)="cancelRegistration(registration.id)"
-            [disabled]="isCutoffPassed(registration)"
+            [disabled]="isCutoffPassed(registration) || isCancelling(registration)"
             [class]="
               isCutoffPassed(registration)
                 ? 'inline-flex h-9 cursor-not-allowed items-center justify-center rounded-md border border-[#c9a3a3] bg-[#c9a3a3] px-4 py-2 text-sm font-medium text-white'
-                : 'hover:border-red hover:bg-red focus-visible:ring-red inline-flex h-9 cursor-pointer items-center justify-center rounded-md border border-gray-300 bg-transparent px-4 py-2 text-sm font-medium transition-colors hover:text-white focus-visible:ring-2 focus-visible:outline-none'
+                : 'hover:border-red hover:bg-red focus-visible:ring-red inline-flex h-9 cursor-pointer items-center justify-center rounded-md border border-gray-300 bg-transparent px-4 py-2 text-sm font-medium transition-colors hover:text-white focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-70'
             "
           >
-            {{ isCutoffPassed(registration) ? 'Cancellation Closed' : 'Cancel Registration' }}
+            {{
+              isCutoffPassed(registration)
+                ? 'Cancellation Closed'
+                : isCancelling(registration)
+                  ? 'Cancelling...'
+                  : 'Cancel Registration'
+            }}
           </button>
         </div>
       </div>

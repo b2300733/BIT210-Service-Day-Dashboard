@@ -101,10 +101,11 @@
 
           @if (isRegistered(activity) && !isCutoffPassed(activity)) {
             <button
-              class="hover:bg-red hover:border-red w-full cursor-pointer rounded-lg border border-gray-300 py-2 text-sm font-medium transition-colors hover:text-white"
+              class="hover:bg-red hover:border-red w-full cursor-pointer rounded-lg border border-gray-300 py-2 text-sm font-medium transition-colors hover:text-white disabled:cursor-not-allowed disabled:opacity-70"
               (click)="$event.stopPropagation(); cancelRegistration(activity)"
+              [disabled]="isCancelling(activity)"
             >
-              Cancel Registration
+              {{ isCancelling(activity) ? 'Cancelling...' : 'Cancel Registration' }}
             </button>
           }
 
@@ -136,10 +137,11 @@
             activity.registered < activity.totalSlots
           ) {
             <button
-              class="bg-primary hover:bg-primary/90 border-primary w-full cursor-pointer rounded-lg border py-2 text-sm font-medium text-white transition-colors"
+              class="bg-primary hover:bg-primary/90 border-primary w-full cursor-pointer rounded-lg border py-2 text-sm font-medium text-white transition-colors disabled:cursor-not-allowed disabled:opacity-70"
               (click)="$event.stopPropagation(); register(activity)"
+              [disabled]="isRegistering(activity)"
             >
-              Register
+              {{ isRegistering(activity) ? 'Registering...' : 'Register' }}
             </button>
           }
         </div>
@@ -267,10 +269,11 @@
 
           @if (isRegistered(selectedActivity) && !isCutoffPassed(selectedActivity)) {
             <button
-              class="hover:bg-red hover:border-red w-full cursor-pointer rounded-xl border-2 border-gray-300 bg-white py-3 text-base font-semibold transition-colors hover:text-white"
+              class="hover:bg-red hover:border-red w-full cursor-pointer rounded-xl border-2 border-gray-300 bg-white py-3 text-base font-semibold transition-colors hover:text-white disabled:cursor-not-allowed disabled:opacity-70"
               (click)="cancelRegistration(selectedActivity)"
+              [disabled]="isCancelling(selectedActivity)"
             >
-              Cancel Registration
+              {{ isCancelling(selectedActivity) ? 'Cancelling...' : 'Cancel Registration' }}
             </button>
           }
 
@@ -300,10 +303,11 @@
             selectedActivity.registered < selectedActivity.totalSlots
           ) {
             <button
-              class="bg-primary hover:bg-primary/90 w-full cursor-pointer rounded-xl py-3 text-base font-semibold text-white shadow-md transition-colors hover:shadow-lg"
+              class="bg-primary hover:bg-primary/90 w-full cursor-pointer rounded-xl py-3 text-base font-semibold text-white shadow-md transition-colors hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-70"
               (click)="register(selectedActivity)"
+              [disabled]="isRegistering(selectedActivity)"
             >
-              Confirm Registration
+              {{ isRegistering(selectedActivity) ? 'Registering...' : 'Confirm Registration' }}
             </button>
           }
         </div>

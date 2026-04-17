@@ -19,6 +19,15 @@ const trimActivityPayload = (payload = {}) => ({
     typeof payload.description === 'string' ? payload.description.trim() : payload.description,
 });
 
+const isCutoffPassed = (activity) => {
+  if (!activity?.cutoffDate || !activity?.cutoffTime) {
+    return false;
+  }
+
+  const cutoffDateTime = new Date(`${activity.cutoffDate}T${activity.cutoffTime}`);
+  return Number.isNaN(cutoffDateTime.getTime()) ? false : cutoffDateTime < new Date();
+};
+
 const getActivities = async (req, res) => {
   try {
     const activities = await Activity.find();
@@ -42,6 +51,10 @@ const updateActivity = async (req, res) => {
   try {
     const existingActivity = await Activity.findById(req.params.id);
     if (!existingActivity) return res.status(404).json({ message: 'Activity not found' });
+
+    if (isCutoffPassed(existingActivity)) {
+      return res.status(409).json({ message: 'Activity cutoff has passed.' });
+    }
 
     const requestedTotalSlots = Number(req.body?.totalSlots);
     if (Number.isFinite(requestedTotalSlots) && requestedTotalSlots < existingActivity.registered) {
@@ -67,9 +80,15 @@ const updateActivity = async (req, res) => {
 
 const deleteActivity = async (req, res) => {
   try {
+    const activity = await Activity.findById(req.params.id);
+    if (!activity) return res.status(404).json({ message: 'Activity not found' });
+
+    if (isCutoffPassed(activity)) {
+      return res.status(409).json({ message: 'Activity cutoff has passed.' });
+    }
+
     const deletedRegistrations = await Registration.deleteMany({ activityId: req.params.id });
     const deletedActivity = await Activity.findByIdAndDelete(req.params.id);
-    if (!deletedActivity) return res.status(404).json({ message: 'Activity not found' });
     res.json({
       message: 'Activity deleted',
       deletedRegistrations: deletedRegistrations.deletedCount ?? 0,

@@ -8,7 +8,8 @@ import {
 import { CommonModule } from '@angular/common';
 import { LucideAngularModule, MapPin, Calendar, Clock } from 'lucide-angular';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { of } from 'rxjs';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { finalize, of } from 'rxjs';
 import { AuthService } from '../../../../backend/services/auth.service';
 import { RegistrationsService } from '../../../../backend/services/registrations.service';
 
@@ -29,7 +30,7 @@ interface RegistrationItem {
 
 @Component({
   selector: 'app-employee-registrations',
-  imports: [CommonModule, LucideAngularModule],
+  imports: [CommonModule, LucideAngularModule, MatSnackBarModule],
   templateUrl: './employee-registrations.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -42,8 +43,10 @@ export class EmployeeRegistrationsComponent {
   private readonly authService = inject(AuthService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly changeDetectorRef = inject(ChangeDetectorRef);
+  private readonly snackBar = inject(MatSnackBar);
 
   registrations: RegistrationItem[] = [];
+  private cancellingIds = new Set<string>();
 
   constructor() {
     this.ensureEmployeeId().subscribe((employeeId) => {
@@ -96,15 +99,35 @@ export class EmployeeRegistrationsComponent {
       return;
     }
 
-    this.registrationsService.deleteRegistration(employeeId, target.activityId).subscribe({
-      next: () => {
-        this.registrations = this.registrations.filter((reg) => reg.id !== registrationId);
-        this.changeDetectorRef.markForCheck();
-      },
-      error: (err) => {
-        console.error('Cancel registration failed:', err);
-      },
-    });
+    if (this.cancellingIds.has(target.id)) {
+      return;
+    }
+
+    this.cancellingIds = new Set(this.cancellingIds).add(target.id);
+    this.changeDetectorRef.markForCheck();
+
+    this.registrationsService
+      .deleteRegistration(employeeId, target.activityId)
+      .pipe(
+        finalize(() => {
+          this.cancellingIds.delete(target.id);
+          this.changeDetectorRef.markForCheck();
+        }),
+      )
+      .subscribe({
+        next: () => {
+          this.registrations = this.registrations.filter((reg) => reg.id !== registrationId);
+          this.changeDetectorRef.markForCheck();
+          this.showSnackbar('Registration cancelled. Check your email.');
+        },
+        error: (err) => {
+          console.error('Cancel registration failed:', err);
+        },
+      });
+  }
+
+  isCancelling(registration: RegistrationItem): boolean {
+    return this.cancellingIds.has(registration.id);
   }
 
   private formatDate(value?: string): string {
@@ -134,6 +157,14 @@ export class EmployeeRegistrationsComponent {
 
   canCancel(registration: RegistrationItem): boolean {
     return !this.isCutoffPassed(registration);
+  }
+
+  private showSnackbar(message: string): void {
+    this.snackBar.open(message, '', {
+      duration: 4000,
+      horizontalPosition: 'end',
+      verticalPosition: 'top',
+    });
   }
 
   private ensureEmployeeId() {

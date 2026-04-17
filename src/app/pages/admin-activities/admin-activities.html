@@ -143,14 +143,20 @@
                 <button
                   type="button"
                   (click)="openAddEdit(element)"
-                  class="hover:bg-green inline-flex h-8 cursor-pointer items-center justify-center rounded-md px-2 transition duration-200 hover:text-white"
+                  [disabled]="isCutoffPassed(element)"
+                  class="hover:bg-green inline-flex h-8 cursor-pointer items-center justify-center rounded-md px-2 transition duration-200 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <lucide-angular [img]="Pencil" class="h-4 w-4" />
                 </button>
                 <button
                   type="button"
-                  class="text-red hover:bg-red inline-flex h-8 cursor-pointer items-center justify-center rounded-md px-2 transition duration-200 hover:text-white"
                   (click)="openDelete(element)"
+                  [disabled]="isCutoffPassed(element)"
+                  [class]="
+                    isCutoffPassed(element)
+                      ? 'text-red hover:bg-red inline-flex h-8 cursor-not-allowed items-center justify-center rounded-md px-2 opacity-60 hover:text-white'
+                      : 'text-red hover:bg-red inline-flex h-8 cursor-pointer items-center justify-center rounded-md px-2 transition duration-200 hover:text-white'
+                  "
                 >
                   <lucide-angular [img]="Trash2" class="h-4 w-4" />
                 </button>
@@ -233,7 +239,8 @@
               <button
                 type="button"
                 (click)="openAddEdit(element)"
-                class="hover:bg-green flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-md border border-gray-300 px-4 py-2 text-sm transition duration-200 hover:text-white"
+                [disabled]="isCutoffPassed(element)"
+                class="hover:bg-green flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-md border border-gray-300 px-4 py-2 text-sm transition duration-200 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <lucide-angular [img]="Pencil" class="h-4 w-4" />
                 Edit
@@ -241,7 +248,12 @@
               <button
                 type="button"
                 (click)="openDelete(element)"
-                class="text-red hover:bg-red hover:border-red flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-md border border-gray-300 px-4 py-2 text-sm transition duration-200 hover:text-white"
+                [disabled]="isCutoffPassed(element)"
+                [class]="
+                  isCutoffPassed(element)
+                    ? 'text-red hover:bg-red flex flex-1 cursor-not-allowed items-center justify-center gap-2 rounded-md border border-gray-300 px-4 py-2 text-sm opacity-60 hover:text-white'
+                    : 'text-red hover:bg-red hover:border-red flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-md border border-gray-300 px-4 py-2 text-sm transition duration-200 hover:text-white'
+                "
               >
                 <lucide-angular [img]="Trash2" class="h-4 w-4" />
                 Delete

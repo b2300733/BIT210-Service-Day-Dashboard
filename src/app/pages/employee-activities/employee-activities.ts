@@ -9,9 +9,10 @@ import {
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { of } from 'rxjs';
+import { finalize, of } from 'rxjs';
 import {
   LucideAngularModule,
   MapPin,
@@ -29,7 +30,14 @@ import { Activity } from '../../models/activity.model';
 
 @Component({
   selector: 'app-employee-activities',
-  imports: [CommonModule, MatCardModule, MatButtonModule, LucideAngularModule, FormsModule],
+  imports: [
+    CommonModule,
+    MatCardModule,
+    MatButtonModule,
+    MatSnackBarModule,
+    LucideAngularModule,
+    FormsModule,
+  ],
   templateUrl: './employee-activities.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -47,6 +55,7 @@ export class EmployeeActivitiesComponent implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly changeDetectorRef = inject(ChangeDetectorRef);
+  private readonly snackBar = inject(MatSnackBar);
 
   readonly cardBaseClass =
     'flex min-h-105 cursor-pointer flex-col justify-between rounded-xl !bg-white p-6 transition-all duration-200 ease-in hover:-translate-y-1 hover:shadow-lg';
@@ -58,6 +67,8 @@ export class EmployeeActivitiesComponent implements OnInit {
 
   activities: Activity[] = [];
   private userRegistrations = new Set<string>();
+  private registeringIds = new Set<string>();
+  private cancellingIds = new Set<string>();
 
   ngOnInit() {
     this.activitiesService.activities$
@@ -118,10 +129,13 @@ export class EmployeeActivitiesComponent implements OnInit {
   }
 
   register(activity: Activity) {
-    console.log('Attempting to register for:', activity.name);
-
     if (this.isCutoffPassed(activity)) {
       console.warn('Registration cutoff has passed.');
+      return;
+    }
+
+    const activityKey = this.getActivityKey(activity);
+    if (this.registeringIds.has(activityKey)) {
       return;
     }
 
@@ -133,8 +147,6 @@ export class EmployeeActivitiesComponent implements OnInit {
     );
 
     if (existingRegistration) {
-      console.log('Conflict found! Already registered for:', existingRegistration.name);
-
       this.selectedActivity = null;
 
       this.conflictWarning = {
@@ -144,29 +156,40 @@ export class EmployeeActivitiesComponent implements OnInit {
       return;
     }
 
-    console.log('Registration successful!');
+    this.registeringIds = new Set(this.registeringIds).add(activityKey);
+    this.changeDetectorRef.markForCheck();
+
     this.ensureEmployeeId().subscribe((employeeId) => {
       if (!employeeId || !activity._id) {
         console.error('Missing employee or activity id.', {
           employeeId,
           activityId: activity._id,
         });
+        this.registeringIds.delete(activityKey);
+        this.changeDetectorRef.markForCheck();
         return;
       }
 
-      this.registrationsService.createRegistration(employeeId, activity._id).subscribe({
-        next: () => {
-          this.userRegistrations = new Set(this.userRegistrations).add(
-            this.getActivityKey(activity),
-          );
-          this.changeDetectorRef.markForCheck();
-          this.refreshActivities();
-          this.registrationsService.refreshActiveRegistrations();
-        },
-        error: (err) => {
-          console.error('Registration failed:', err);
-        },
-      });
+      this.registrationsService
+        .createRegistration(employeeId, activity._id)
+        .pipe(
+          finalize(() => {
+            this.registeringIds.delete(activityKey);
+            this.changeDetectorRef.markForCheck();
+          }),
+        )
+        .subscribe({
+          next: () => {
+            this.userRegistrations = new Set(this.userRegistrations).add(activityKey);
+            this.changeDetectorRef.markForCheck();
+            this.refreshActivities();
+            this.registrationsService.refreshActiveRegistrations();
+            this.showSnackbar('Registration successful. Check your email.');
+          },
+          error: (err) => {
+            console.error('Registration failed:', err);
+          },
+        });
     });
   }
 
@@ -176,29 +199,56 @@ export class EmployeeActivitiesComponent implements OnInit {
       return;
     }
 
+    const activityKey = this.getActivityKey(activity);
+    if (this.cancellingIds.has(activityKey)) {
+      return;
+    }
+
+    this.cancellingIds = new Set(this.cancellingIds).add(activityKey);
+    this.changeDetectorRef.markForCheck();
+
     this.ensureEmployeeId().subscribe((employeeId) => {
       if (!employeeId || !activity._id) {
         console.error('Missing employee or activity id.', {
           employeeId,
           activityId: activity._id,
         });
+        this.cancellingIds.delete(activityKey);
+        this.changeDetectorRef.markForCheck();
         return;
       }
 
-      this.registrationsService.deleteRegistration(employeeId, activity._id).subscribe({
-        next: () => {
-          const nextRegistrations = new Set(this.userRegistrations);
-          nextRegistrations.delete(this.getActivityKey(activity));
-          this.userRegistrations = nextRegistrations;
-          this.changeDetectorRef.markForCheck();
-          this.refreshActivities();
-          this.registrationsService.refreshActiveRegistrations();
-        },
-        error: (err) => {
-          console.error('Cancel registration failed:', err);
-        },
-      });
+      this.registrationsService
+        .deleteRegistration(employeeId, activity._id)
+        .pipe(
+          finalize(() => {
+            this.cancellingIds.delete(activityKey);
+            this.changeDetectorRef.markForCheck();
+          }),
+        )
+        .subscribe({
+          next: () => {
+            const nextRegistrations = new Set(this.userRegistrations);
+            nextRegistrations.delete(activityKey);
+            this.userRegistrations = nextRegistrations;
+            this.changeDetectorRef.markForCheck();
+            this.refreshActivities();
+            this.registrationsService.refreshActiveRegistrations();
+            this.showSnackbar('Registration cancelled. Check your email.');
+          },
+          error: (err) => {
+            console.error('Cancel registration failed:', err);
+          },
+        });
     });
+  }
+
+  isRegistering(activity: Activity): boolean {
+    return this.registeringIds.has(this.getActivityKey(activity));
+  }
+
+  isCancelling(activity: Activity): boolean {
+    return this.cancellingIds.has(this.getActivityKey(activity));
   }
 
   closeConflictWarning() {
@@ -238,6 +288,14 @@ export class EmployeeActivitiesComponent implements OnInit {
 
   private getEmployeeId(): string | null {
     return this.authService.currentUser()?._id ?? null;
+  }
+
+  private showSnackbar(message: string): void {
+    this.snackBar.open(message, '', {
+      duration: 4000,
+      horizontalPosition: 'end',
+      verticalPosition: 'top',
+    });
   }
 
   private ensureEmployeeId() {

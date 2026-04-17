@@ -152,7 +152,7 @@ export class AdminQrPage implements OnInit, OnDestroy {
   }
 
   generateQrCodes(): void {
-    if (!this.selectedActivity?._id || !this.isCutoffPassed) return;
+    if (!this.selectedActivity?._id) return;
     this.qrService.generateQrCodes(this.selectedActivity._id).subscribe({
       next: (records) => {
         this.dataSource.data = records;
