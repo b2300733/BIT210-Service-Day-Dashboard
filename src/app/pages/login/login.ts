@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { ChangeDetectorRef, Component, NgZone, inject } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
@@ -20,23 +21,32 @@ export class LoginPage {
   password = '';
   error = '';
 
-  constructor(
-    private router: Router,
-    private authService: AuthService,
-  ) {}
+  private router = inject(Router);
+  private authService = inject(AuthService);
+  private ngZone = inject(NgZone);
+  private cdr = inject(ChangeDetectorRef);
 
   signIn() {
     this.error = '';
-    this.authService.login(this.email, this.password).subscribe((user) => {
-      if (!user) {
-        this.error = 'Invalid credentials. Please try again.';
-        return;
-      }
-      if (user.role === 'admin') {
-        this.router.navigate(['/admin-dashboard']);
-      } else {
-        this.router.navigate(['/employee-dashboard']);
-      }
+    this.authService.login(this.email, this.password).subscribe({
+      next: (user) => {
+        this.ngZone.run(() => {
+          if (user.role === 'admin') {
+            this.router.navigate(['/admin-dashboard']);
+          } else {
+            this.router.navigate(['/employee-dashboard']);
+          }
+        });
+      },
+      error: (err: HttpErrorResponse) => {
+        this.ngZone.run(() => {
+          this.error =
+            err.status === 401
+              ? 'Invalid credentials. Please try again.'
+              : 'Unable to sign in. Please try again.';
+          this.cdr.detectChanges();
+        });
+      },
     });
   }
 }

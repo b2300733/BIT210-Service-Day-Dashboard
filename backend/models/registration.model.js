@@ -41,7 +41,7 @@ registrationSchema.index(
   {
     unique: true,
     partialFilterExpression: {
-      qrData: { $type: 'string', $ne: '' },
+      qrData: { $type: 'string', $gt: '' },
     },
   },
 );

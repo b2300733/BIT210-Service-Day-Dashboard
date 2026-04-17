@@ -33,7 +33,7 @@ export class AuthService {
     this.restoreUser();
   }
 
-  login(email: string, password: string): Observable<User | null> {
+  login(email: string, password: string): Observable<User> {
     return this.http.post<UserRecord>(`${API_URL}/login`, { email, password }).pipe(
       tap((user) => {
         const nextUser: User = {
@@ -53,10 +53,6 @@ export class AuthService {
         department: user.department,
         role: user.role,
       })),
-      catchError((err) => {
-        console.error('Login failed:', err);
-        return of(null);
-      }),
     );
   }
 

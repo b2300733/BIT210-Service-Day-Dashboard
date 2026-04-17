@@ -23,11 +23,9 @@ mongoose
   .connect(process.env.MongoDB_Host)
   .then(async () => {
     console.log('connected to database');
-    await Registration.syncIndexes();
-    console.log('Registration indexes synchronized');
   })
-  .catch(() => {
-    console.log('connection failed');
+  .catch((error) => {
+    console.error('connection failed:', error.message);
   });
 
 app.listen(3000, () => {
