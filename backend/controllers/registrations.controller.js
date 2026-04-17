@@ -65,6 +65,10 @@ const listRegistrations = async (req, res) => {
       return res.status(400).json({ message: 'employeeId is required.' });
     }
 
+    if (req.user?.role !== 'admin' && req.user?._id !== employeeId) {
+      return res.status(403).json({ message: 'Forbidden.' });
+    }
+
     if (!mongoose.Types.ObjectId.isValid(employeeId)) {
       return res.status(400).json({ message: 'employeeId must be a valid id.' });
     }
@@ -81,6 +85,10 @@ const listRegistrationsWithActivity = async (req, res) => {
     const employeeId = req.query.employeeId?.trim();
     if (!employeeId) {
       return res.status(400).json({ message: 'employeeId is required.' });
+    }
+
+    if (req.user?.role !== 'admin' && req.user?._id !== employeeId) {
+      return res.status(403).json({ message: 'Forbidden.' });
     }
 
     if (!mongoose.Types.ObjectId.isValid(employeeId)) {
@@ -283,6 +291,10 @@ const createRegistration = async (req, res) => {
       return res.status(400).json({ message: 'activityId must be a valid id.' });
     }
 
+    if (req.user?.role !== 'admin' && req.user?._id !== employeeId) {
+      return res.status(403).json({ message: 'Forbidden.' });
+    }
+
     const employee = await User.findById(employeeId).select('name email');
     if (!employee) {
       return res.status(404).json({ message: 'Employee not found.' });
@@ -343,6 +355,10 @@ const deleteRegistration = async (req, res) => {
 
     if (!mongoose.Types.ObjectId.isValid(activityId)) {
       return res.status(400).json({ message: 'activityId must be a valid id.' });
+    }
+
+    if (req.user?.role !== 'admin' && req.user?._id !== employeeId) {
+      return res.status(403).json({ message: 'Forbidden.' });
     }
 
     const deleted = await Registration.findOneAndDelete({ employeeId, activityId });

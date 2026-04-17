@@ -1,5 +1,17 @@
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const User = require('../models/user.model');
+
+const getJwtSecret = () => process.env.JWT_SECRET;
+
+const setAuthCookie = (res, token) => {
+  res.cookie('auth_token', token, {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: false,
+    maxAge: 8 * 60 * 60 * 1000,
+  });
+};
 
 const listUsers = async (req, res) => {
   try {
@@ -15,6 +27,14 @@ const getUserByEmail = async (req, res) => {
     const email = req.query.email?.trim().toLowerCase();
     if (!email) {
       return res.status(400).json({ message: 'email is required.' });
+    }
+
+    if (!req.user) {
+      return res.status(401).json({ message: 'Unauthorized.' });
+    }
+
+    if (req.user.role !== 'admin' && req.user.email !== email) {
+      return res.status(403).json({ message: 'Forbidden.' });
     }
 
     const user = await User.findOne({ email }).select('-passwordHash');
@@ -86,6 +106,25 @@ const loginUser = async (req, res) => {
       return res.status(401).json({ message: 'Invalid credentials.' });
     }
 
+    const secret = getJwtSecret();
+    if (!secret) {
+      return res.status(500).json({ message: 'JWT_SECRET is not configured.' });
+    }
+
+    const token = jwt.sign(
+      {
+        _id: user._id.toString(),
+        email: user.email,
+        role: user.role,
+        name: user.name,
+        department: user.department,
+      },
+      secret,
+      { expiresIn: '8h' },
+    );
+
+    setAuthCookie(res, token);
+
     res.json({
       _id: user._id,
       name: user.name,
@@ -99,9 +138,30 @@ const loginUser = async (req, res) => {
   }
 };
 
+const getMe = async (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ message: 'Unauthorized.' });
+  }
+
+  return res.json({
+    _id: req.user._id,
+    name: req.user.name,
+    email: req.user.email,
+    department: req.user.department,
+    role: req.user.role,
+  });
+};
+
+const logoutUser = async (req, res) => {
+  res.clearCookie('auth_token', { httpOnly: true, sameSite: 'lax', secure: false });
+  res.json({ message: 'Logged out.' });
+};
+
 module.exports = {
   listUsers,
   createUser,
   getUserByEmail,
   loginUser,
+  getMe,
+  logoutUser,
 };

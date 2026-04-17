@@ -1,64 +1,69 @@
 import { inject } from '@angular/core';
+import { map } from 'rxjs/operators';
 import { CanActivateChildFn, CanActivateFn, Router } from '@angular/router';
 import { AuthService } from '../../backend/services/auth.service';
 
-const redirectToLogin = () => {
-  const router = inject(Router);
-  return router.createUrlTree(['/login']);
-};
-
-const redirectToRoleHome = (role: 'admin' | 'employee') => {
-  const router = inject(Router);
-  const path = role === 'admin' ? '/admin-dashboard' : '/employee-dashboard';
-  return router.createUrlTree([path]);
-};
+const getRoleHome = (role: 'admin' | 'employee') =>
+  role === 'admin' ? '/admin-dashboard' : '/employee-dashboard';
 
 export const authGuard: CanActivateFn = () => {
   const authService = inject(AuthService);
-  return authService.currentUser() ? true : redirectToLogin();
+  const router = inject(Router);
+  return authService
+    .ensureSession()
+    .pipe(map((user) => (user ? true : router.createUrlTree(['/login']))));
 };
 
 export const roleGuard = (requiredRole: 'admin' | 'employee'): CanActivateFn => {
   return () => {
     const authService = inject(AuthService);
-    const currentUser = authService.currentUser();
+    const router = inject(Router);
+    return authService.ensureSession().pipe(
+      map((currentUser) => {
+        if (!currentUser) {
+          return router.createUrlTree(['/login']);
+        }
 
-    if (!currentUser) {
-      return redirectToLogin();
-    }
+        if (currentUser.role !== requiredRole) {
+          return router.createUrlTree([getRoleHome(currentUser.role)]);
+        }
 
-    if (currentUser.role !== requiredRole) {
-      return redirectToRoleHome(currentUser.role);
-    }
-
-    return true;
+        return true;
+      }),
+    );
   };
 };
 
 export const roleChildGuard = (requiredRole: 'admin' | 'employee'): CanActivateChildFn => {
   return () => {
     const authService = inject(AuthService);
-    const currentUser = authService.currentUser();
+    const router = inject(Router);
+    return authService.ensureSession().pipe(
+      map((currentUser) => {
+        if (!currentUser) {
+          return router.createUrlTree(['/login']);
+        }
 
-    if (!currentUser) {
-      return redirectToLogin();
-    }
+        if (currentUser.role !== requiredRole) {
+          return router.createUrlTree([getRoleHome(currentUser.role)]);
+        }
 
-    if (currentUser.role !== requiredRole) {
-      return redirectToRoleHome(currentUser.role);
-    }
-
-    return true;
+        return true;
+      }),
+    );
   };
 };
 
 export const loginGuard: CanActivateFn = () => {
   const authService = inject(AuthService);
-  const currentUser = authService.currentUser();
+  const router = inject(Router);
+  return authService.ensureSession().pipe(
+    map((currentUser) => {
+      if (!currentUser) {
+        return true;
+      }
 
-  if (!currentUser) {
-    return true;
-  }
-
-  return redirectToRoleHome(currentUser.role);
+      return router.createUrlTree([getRoleHome(currentUser.role)]);
+    }),
+  );
 };

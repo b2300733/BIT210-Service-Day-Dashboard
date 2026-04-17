@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const { requireAuth, requireRole } = require('../middleware/auth.middleware');
 const {
   listReminders,
   createReminder,
@@ -9,11 +10,11 @@ const {
   sendReminderNow,
 } = require('../controllers/reminders.controller');
 
-router.get('/', listReminders);
-router.post('/', createReminder);
-router.post('/broadcast', sendBroadcast);
-router.post('/:id/send', sendReminderNow);
-router.put('/:id', updateReminderStatus);
-router.delete('/:id', deleteReminder);
+router.get('/', requireAuth, requireRole('admin'), listReminders);
+router.post('/', requireAuth, requireRole('admin'), createReminder);
+router.post('/broadcast', requireAuth, requireRole('admin'), sendBroadcast);
+router.post('/:id/send', requireAuth, requireRole('admin'), sendReminderNow);
+router.put('/:id', requireAuth, requireRole('admin'), updateReminderStatus);
+router.delete('/:id', requireAuth, requireRole('admin'), deleteReminder);
 
 module.exports = router;

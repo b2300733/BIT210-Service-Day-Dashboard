@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const { requireAuth, requireRole } = require('../middleware/auth.middleware');
 const {
   getActivities,
   createActivity,
@@ -8,15 +9,15 @@ const {
 } = require('../controllers/activities.controller');
 
 // Get all activities
-router.get('/', getActivities);
+router.get('/', requireAuth, getActivities);
 
 // Create a new activity
-router.post('/', createActivity);
+router.post('/', requireAuth, requireRole('admin'), createActivity);
 
 // Update an activity
-router.put('/:id', updateActivity);
+router.put('/:id', requireAuth, requireRole('admin'), updateActivity);
 
 // Delete an activity
-router.delete('/:id', deleteActivity);
+router.delete('/:id', requireAuth, requireRole('admin'), deleteActivity);
 
 module.exports = router;
