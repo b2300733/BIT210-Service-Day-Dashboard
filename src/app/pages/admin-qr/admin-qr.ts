@@ -6,6 +6,7 @@ import { MatSort, Sort, MatSortModule } from '@angular/material/sort';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { QRCodeComponent } from 'angularx-qrcode';
 import QrScanner from 'qr-scanner';
 import {
@@ -23,6 +24,7 @@ import { COMMON_PAGES_MODULES } from '../../module/common.pages.module';
 import { Activity } from '../../models/activity.model';
 import { ActivitiesService } from '../../../../backend/services/activities.service';
 import { QrService, CheckInRecord } from '../../../../backend/services/qr.service';
+import { finalize } from 'rxjs';
 
 export type { CheckInRecord };
 
@@ -36,6 +38,7 @@ export type { CheckInRecord };
     MatSelectModule,
     MatTableModule,
     MatSortModule,
+    MatSnackBarModule,
     QRCodeComponent,
   ],
   templateUrl: './admin-qr.html',
@@ -55,6 +58,7 @@ export class AdminQrPage implements OnInit, OnDestroy {
   private qrService = inject(QrService);
   private activitiesService = inject(ActivitiesService);
   private _liveAnnouncer = inject(LiveAnnouncer);
+  private snackBar = inject(MatSnackBar);
 
   activities: Activity[] = [];
   selectedActivity: Activity | null = null;
@@ -64,6 +68,7 @@ export class AdminQrPage implements OnInit, OnDestroy {
   showScanOverlay = false;
   scanMessage = '';
   scanStatus: 'idle' | 'scanning' | 'success' | 'error' = 'idle';
+  isGenerating = false;
   private scanner: QrScanner | null = null;
   private lastDecodeErrorAt = 0;
 
@@ -152,15 +157,26 @@ export class AdminQrPage implements OnInit, OnDestroy {
   }
 
   generateQrCodes(): void {
-    if (!this.selectedActivity?._id) return;
-    this.qrService.generateQrCodes(this.selectedActivity._id).subscribe({
-      next: (records) => {
-        this.dataSource.data = records;
-      },
-      error: (err) => {
-        console.error('Failed to generate QR codes:', err);
-      },
-    });
+    if (!this.selectedActivity?._id || !this.isCutoffPassed || this.isGenerating) return;
+
+    this.isGenerating = true;
+    this.qrService
+      .generateQrCodes(this.selectedActivity._id)
+      .pipe(
+        finalize(() => {
+          this.isGenerating = false;
+        }),
+      )
+      .subscribe({
+        next: (records) => {
+          this.dataSource.data = records;
+          this.showSnackbar('QR codes generated and emailed to employees.');
+        },
+        error: (err) => {
+          console.error('Failed to generate QR codes:', err);
+          this.showSnackbar('Failed to generate QR codes. Please try again.');
+        },
+      });
   }
 
   openScanOverlay(): void {
@@ -288,5 +304,13 @@ export class AdminQrPage implements OnInit, OnDestroy {
       this.scanStatus = 'scanning';
       this.scanMessage = 'Scanning for QR codes...';
     }
+  }
+
+  private showSnackbar(message: string): void {
+    this.snackBar.open(message, '', {
+      duration: 4000,
+      horizontalPosition: 'end',
+      verticalPosition: 'top',
+    });
   }
 }

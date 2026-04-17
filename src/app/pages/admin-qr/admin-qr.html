@@ -61,14 +61,22 @@
               mat-flat-button
               type="button"
               (click)="generateQrCodes()"
-              [disabled]="dataSource.data.length === 0"
+              [disabled]="dataSource.data.length === 0 || !isCutoffPassed || isGenerating"
               class="bg-primary hover:bg-primary/90 flex cursor-pointer items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-white transition duration-200 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              <lucide-angular [img]="QrCode" class="h-4 w-4"></lucide-angular> Generate QR Codes
+              <lucide-angular [img]="QrCode" class="h-4 w-4"></lucide-angular>
+              {{ isGenerating ? 'Generating...' : 'Generate QR Codes' }}
             </button>
-            <p class="text-xs text-gray-600">
-              Generates a unique QR code for each registered employee
-            </p>
+            @if (!isCutoffPassed) {
+              <p class="text-center text-xs font-medium text-red-600">
+                QR generation available after cutoff time<br />({{ selectedActivity.cutoffDate }} at
+                {{ selectedActivity.cutoffTime }})
+              </p>
+            } @else {
+              <p class="text-xs text-gray-600">
+                Generates a unique QR code for each registered employee
+              </p>
+            }
           } @else {
             <button
               mat-flat-button

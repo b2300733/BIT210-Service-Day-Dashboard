@@ -198,7 +198,12 @@ const generateQrCodesForActivity = async (req, res) => {
       return res.status(404).json({ message: 'Activity not found.' });
     }
 
-    // NOTE: Cutoff enforcement disabled for testing.
+    const cutoffDateTime = new Date(`${activity.cutoffDate}T${activity.cutoffTime}`);
+    if (!Number.isNaN(cutoffDateTime.getTime()) && cutoffDateTime > new Date()) {
+      return res.status(409).json({
+        message: `Cannot generate QR codes before cutoff time (${activity.cutoffDate} at ${activity.cutoffTime}).`,
+      });
+    }
 
     const registrations = await Registration.find({ activityId })
       .populate({ path: 'employeeId', select: 'name email department' })
