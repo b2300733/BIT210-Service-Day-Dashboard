@@ -36,12 +36,42 @@ export class QrService {
     return this.http.post<CheckInRecord>(`${API_URL}/check-in`, { qrData });
   }
 
-  downloadQr(record: CheckInRecord): void {
+  async downloadQr(record: CheckInRecord): Promise<void> {
     if (!record.qrData) return;
+
+    const fileName = this.buildFileName(record.employeeName);
+    const url = this.buildQrUrl(record.qrData, 400, 'png');
+
+    try {
+      const response = await fetch(url, { method: 'GET' });
+      if (!response.ok) {
+        throw new Error(`QR download failed with status ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      this.triggerDownload(objectUrl, fileName);
+      URL.revokeObjectURL(objectUrl);
+    } catch (error) {
+      console.error('Failed to download QR code:', error);
+      this.triggerDownload(url, fileName);
+    }
+  }
+
+  private buildFileName(employeeName: string): string {
+    const normalized = employeeName
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)+/g, '');
+    return `qr-${normalized || 'employee'}.png`;
+  }
+
+  private triggerDownload(url: string, fileName: string): void {
     const link = document.createElement('a');
-    link.href = this.buildQrUrl(record.qrData, 400, 'png');
-    link.download = `qr-${record.employeeName.replace(/\s+/g, '-').toLowerCase()}.png`;
-    link.target = '_blank';
+    link.href = url;
+    link.download = fileName;
+    link.rel = 'noopener';
     link.click();
   }
 
