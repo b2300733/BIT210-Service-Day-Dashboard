@@ -11,7 +11,9 @@
     "format": "prettier --write .",
     "backend": "nodemon backend/server.js",
     "frontend": "ng serve",
-    "dev": "concurrently \"npm run backend\" \"npm run frontend\""
+    "dev": "concurrently \"npm run backend\" \"npm run frontend\"",
+    "start:production": "node backend/server.js",
+    "migrate:mongo:mysql": "node backend/migrate-mongodb-to-mysql.js"
   },
   "prettier": {
     "printWidth": 100,
@@ -50,7 +52,8 @@
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.2",
     "lucide-angular": "^0.563.0",
-    "mongoose": "^9.4.1",
+    "mongodb": "^6.18.0",
+    "mysql2": "^3.14.4",
     "qr-scanner": "^1.4.2",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"

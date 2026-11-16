@@ -1,106 +1,146 @@
-const Activity = require('../models/activity.model');
-const Registration = require('../models/registration.model');
+const crypto = require('crypto');
+const { pool, query } = require('../db');
 
-const trimActivityPayload = (payload = {}) => ({
-  ...payload,
-  name: typeof payload.name === 'string' ? payload.name.trim() : payload.name,
-  serviceType:
-    typeof payload.serviceType === 'string' ? payload.serviceType.trim() : payload.serviceType,
-  scheduleDate:
-    typeof payload.scheduleDate === 'string' ? payload.scheduleDate.trim() : payload.scheduleDate,
-  scheduleTime:
-    typeof payload.scheduleTime === 'string' ? payload.scheduleTime.trim() : payload.scheduleTime,
-  location: typeof payload.location === 'string' ? payload.location.trim() : payload.location,
-  cutoffDate:
-    typeof payload.cutoffDate === 'string' ? payload.cutoffDate.trim() : payload.cutoffDate,
-  cutoffTime:
-    typeof payload.cutoffTime === 'string' ? payload.cutoffTime.trim() : payload.cutoffTime,
-  description:
-    typeof payload.description === 'string' ? payload.description.trim() : payload.description,
+const mapActivity = (row) => ({
+  _id: row.id,
+  name: row.name,
+  serviceType: row.service_type,
+  scheduleDate: row.schedule_date,
+  scheduleTime: row.schedule_time,
+  location: row.location,
+  registered: row.registered,
+  totalSlots: row.total_slots,
+  cutoffDate: row.cutoff_date,
+  cutoffTime: row.cutoff_time,
+  description: row.description,
+  createdAt: row.created_at,
+  updatedAt: row.updated_at,
+});
+
+const trimPayload = (payload = {}) => ({
+  name: payload.name?.trim(),
+  serviceType: payload.serviceType?.trim(),
+  scheduleDate: payload.scheduleDate?.trim(),
+  scheduleTime: payload.scheduleTime?.trim(),
+  location: payload.location?.trim(),
+  totalSlots: Number(payload.totalSlots),
+  cutoffDate: payload.cutoffDate?.trim(),
+  cutoffTime: payload.cutoffTime?.trim(),
+  description: payload.description?.trim(),
 });
 
 const isCutoffPassed = (activity) => {
-  if (!activity?.cutoffDate || !activity?.cutoffTime) {
-    return false;
-  }
-
-  const cutoffDateTime = new Date(`${activity.cutoffDate}T${activity.cutoffTime}`);
-  return Number.isNaN(cutoffDateTime.getTime()) ? false : cutoffDateTime < new Date();
+  const cutoff = new Date(`${activity.cutoff_date}T${activity.cutoff_time}`);
+  return !Number.isNaN(cutoff.getTime()) && cutoff < new Date();
 };
 
 const getActivities = async (req, res) => {
   try {
-    const activities = await Activity.find();
-    res.json(activities);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
+    const [rows] = await query('SELECT * FROM activities ORDER BY schedule_date, schedule_time');
+    res.json(rows.map(mapActivity));
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };
 
 const createActivity = async (req, res) => {
-  const activity = new Activity(trimActivityPayload(req.body));
   try {
-    const newActivity = await activity.save();
-    res.status(201).json(newActivity);
-  } catch (err) {
-    res.status(400).json({ message: err.message });
+    const data = trimPayload(req.body);
+    if (
+      !data.name ||
+      !data.serviceType ||
+      !data.scheduleDate ||
+      !data.scheduleTime ||
+      !data.location ||
+      !data.cutoffDate ||
+      !data.cutoffTime ||
+      !data.description ||
+      !Number.isInteger(data.totalSlots) ||
+      data.totalSlots < 1
+    ) {
+      return res.status(400).json({ message: 'All activity fields are required.' });
+    }
+
+    const id = crypto.randomUUID();
+    await query(
+      `INSERT INTO activities
+        (id, name, service_type, schedule_date, schedule_time, location, total_slots, cutoff_date, cutoff_time, description)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        id,
+        data.name,
+        data.serviceType,
+        data.scheduleDate,
+        data.scheduleTime,
+        data.location,
+        data.totalSlots,
+        data.cutoffDate,
+        data.cutoffTime,
+        data.description,
+      ],
+    );
+    const [rows] = await query('SELECT * FROM activities WHERE id = ?', [id]);
+    res.status(201).json(mapActivity(rows[0]));
+  } catch (error) {
+    res.status(400).json({ message: error.message });
   }
 };
 
 const updateActivity = async (req, res) => {
   try {
-    const existingActivity = await Activity.findById(req.params.id);
-    if (!existingActivity) return res.status(404).json({ message: 'Activity not found' });
-
-    if (isCutoffPassed(existingActivity)) {
+    const [existingRows] = await query('SELECT * FROM activities WHERE id = ?', [req.params.id]);
+    const existing = existingRows[0];
+    if (!existing) return res.status(404).json({ message: 'Activity not found' });
+    if (isCutoffPassed(existing)) {
       return res.status(409).json({ message: 'Activity cutoff has passed.' });
     }
 
-    const requestedTotalSlots = Number(req.body?.totalSlots);
-    if (Number.isFinite(requestedTotalSlots) && requestedTotalSlots < existingActivity.registered) {
+    const data = trimPayload(req.body);
+    if (data.totalSlots < existing.registered) {
       return res.status(409).json({
-        message: `Total slots cannot be lower than the number of registered employees (${existingActivity.registered}).`,
+        message: `Total slots cannot be lower than the number of registered employees (${existing.registered}).`,
       });
     }
 
-    const updateData = {
-      ...trimActivityPayload(req.body),
-      registered: existingActivity.registered,
-    };
-
-    const updatedActivity = await Activity.findByIdAndUpdate(req.params.id, updateData, {
-      new: true,
-      runValidators: true,
-    });
-    res.json(updatedActivity);
-  } catch (err) {
-    res.status(400).json({ message: err.message });
+    await query(
+      `UPDATE activities
+       SET name = ?, service_type = ?, schedule_date = ?, schedule_time = ?, location = ?,
+           total_slots = ?, cutoff_date = ?, cutoff_time = ?, description = ?
+       WHERE id = ?`,
+      [
+        data.name,
+        data.serviceType,
+        data.scheduleDate,
+        data.scheduleTime,
+        data.location,
+        data.totalSlots,
+        data.cutoffDate,
+        data.cutoffTime,
+        data.description,
+        req.params.id,
+      ],
+    );
+    const [rows] = await query('SELECT * FROM activities WHERE id = ?', [req.params.id]);
+    res.json(mapActivity(rows[0]));
+  } catch (error) {
+    res.status(400).json({ message: error.message });
   }
 };
 
 const deleteActivity = async (req, res) => {
   try {
-    const activity = await Activity.findById(req.params.id);
+    const [rows] = await query('SELECT * FROM activities WHERE id = ?', [req.params.id]);
+    const activity = rows[0];
     if (!activity) return res.status(404).json({ message: 'Activity not found' });
-
     if (isCutoffPassed(activity)) {
       return res.status(409).json({ message: 'Activity cutoff has passed.' });
     }
 
-    const deletedRegistrations = await Registration.deleteMany({ activityId: req.params.id });
-    const deletedActivity = await Activity.findByIdAndDelete(req.params.id);
-    res.json({
-      message: 'Activity deleted',
-      deletedRegistrations: deletedRegistrations.deletedCount ?? 0,
-    });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
+    const [result] = await query('DELETE FROM activities WHERE id = ?', [req.params.id]);
+    res.json({ message: 'Activity deleted', deletedRegistrations: activity.registered, deletedActivity: result.affectedRows > 0 });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };
 
-module.exports = {
-  getActivities,
-  createActivity,
-  updateActivity,
-  deleteActivity,
-};
+module.exports = { getActivities, createActivity, updateActivity, deleteActivity };
