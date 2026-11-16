@@ -18,7 +18,7 @@ export interface UserResponse {
   createdAt: string;
 }
 
-const API_URL = '/api/users';
+const API_URL = 'http://localhost:3000/api/users';
 
 @Injectable({
   providedIn: 'root',

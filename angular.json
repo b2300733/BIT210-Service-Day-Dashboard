@@ -19,7 +19,6 @@
           "options": {
             "browser": "src/main.ts",
             "tsConfig": "tsconfig.app.json",
-            "prerender": false,
             "assets": [
               {
                 "glob": "**/*",
@@ -27,15 +26,19 @@
               }
             ],
             "styles": ["src/material-theme.scss", "src/styles.css"],
-            "outputMode": "static"
+            "server": "src/main.server.ts",
+            "outputMode": "server",
+            "ssr": {
+              "entry": "src/server.ts"
+            }
           },
           "configurations": {
             "production": {
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "1.5MB",
-                  "maximumError": "2MB"
+                  "maximumWarning": "500kB",
+                  "maximumError": "1MB"
                 },
                 {
                   "type": "anyComponentStyle",

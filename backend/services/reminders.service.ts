@@ -32,7 +32,7 @@ export interface DeleteResponse {
   message: string;
 }
 
-const API_URL = '/api/reminders';
+const API_URL = 'http://localhost:3000/api/reminders';
 
 @Injectable({
   providedIn: 'root',

@@ -16,7 +16,7 @@ export interface CheckInRecord {
   qrData: string | null;
 }
 
-const API_URL = '/api/registrations';
+const API_URL = 'http://localhost:3000/api/registrations';
 
 @Injectable({ providedIn: 'root' })
 export class QrService {

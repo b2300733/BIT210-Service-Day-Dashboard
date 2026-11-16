@@ -49,7 +49,7 @@ export interface RegistrationTimeline {
   registrations: number;
 }
 
-const API_URL = '/api/registrations';
+const API_URL = 'http://localhost:3000/api/registrations';
 
 @Injectable({
   providedIn: 'root',
