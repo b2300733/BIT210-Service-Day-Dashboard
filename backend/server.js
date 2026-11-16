@@ -1,14 +1,14 @@
 require('dotenv').config();
-const mongoose = require('mongoose');
 const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
+const { initialiseDatabase } = require('./db');
 
 const app = express();
 
 app.use(
   cors({
-    origin: ['http://localhost:4200'],
+    origin: process.env.FRONTEND_ORIGIN || 'http://localhost:4200',
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
@@ -26,15 +26,19 @@ app.use('/api/users', require('./routes/users.route'));
 // Reminders API routes
 app.use('/api/reminders', require('./routes/reminders.route'));
 
-mongoose
-  .connect(process.env.MongoDB_Host)
-  .then(async () => {
-    console.log('connected to database');
-  })
-  .catch((error) => {
-    console.error('connection failed:', error.message);
-  });
+const port = Number(process.env.PORT || 3000);
 
-app.listen(3000, () => {
-  console.log('Server is running on port 3000');
-});
+const startServer = async () => {
+  try {
+    await initialiseDatabase();
+    console.log('Connected to MySQL database');
+    app.listen(port, () => {
+      console.log(`Server is running on port ${port}`);
+    });
+  } catch (error) {
+    console.error('MySQL connection failed:', error.message);
+    process.exitCode = 1;
+  }
+};
+
+startServer();

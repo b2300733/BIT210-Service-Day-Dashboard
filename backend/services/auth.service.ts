@@ -19,7 +19,9 @@ interface UserRecord {
   role: 'admin' | 'employee';
 }
 
-const API_URL = 'http://localhost:3000/api/users';
+import { API_BASE_URL } from './api-base';
+
+const API_URL = `${API_BASE_URL}/users`;
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private http = inject(HttpClient);

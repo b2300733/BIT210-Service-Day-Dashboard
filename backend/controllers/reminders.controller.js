@@ -6,216 +6,83 @@ const User = require('../models/user.model');
 
 let broadcastInFlight = false;
 const reminderInFlight = new Set();
-
-const getApdUrl = () => process.env.AP_Url;
-
 const sendEmail = async (payload) => {
-  const apdUrl = getApdUrl();
-  if (!apdUrl) {
-    throw new Error('APD_Url is not configured.');
-  }
-
-  const response = await fetch(apdUrl, {
-    method: 'POST',
-    body: JSON.stringify(payload),
-  });
-
-  if (!response.ok) {
-    throw new Error('Email request failed.');
-  }
+  if (!process.env.AP_Url) throw new Error('APD_Url is not configured.');
+  const response = await fetch(process.env.AP_Url, { method: 'POST', body: JSON.stringify(payload) });
+  if (!response.ok) throw new Error('Email request failed.');
 };
-
 const buildScheduledFor = (interval) => {
-  const daysMap = { '1-week': 7, '3-day': 3, '1-day': 1 };
-  const days = daysMap[interval];
-  if (!days) {
-    return null;
-  }
-
-  const scheduledDate = new Date();
-  scheduledDate.setDate(scheduledDate.getDate() + days);
-  return `${scheduledDate.toLocaleDateString('en-US')} 05:00 PM`;
+  const days = { '1-week': 7, '3-day': 3, '1-day': 1 }[interval];
+  if (!days) return null;
+  const date = new Date();
+  date.setDate(date.getDate() + days);
+  return `${date.toLocaleDateString('en-US')} 05:00 PM`;
 };
 
 const listReminders = async (req, res) => {
-  try {
-    const reminders = await Reminder.find().sort({ createdAt: -1 });
-    res.json(reminders);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  try { res.json(await Reminder.findAll()); } catch (err) { res.status(500).json({ message: err.message }); }
 };
-
 const createReminder = async (req, res) => {
   try {
     const activity = req.body?.activity?.trim();
     const type = req.body?.type?.trim() || req.body?.interval?.trim();
     const scheduledFor = req.body?.scheduledFor?.trim() || buildScheduledFor(type);
-
-    if (!activity || !type || !scheduledFor) {
-      return res.status(400).json({ message: 'activity, type, and scheduledFor are required.' });
-    }
-
-    const reminder = await Reminder.create({ activity, type, scheduledFor, status: 'pending' });
-    res.status(201).json(reminder);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+    if (!activity || !type || !scheduledFor) return res.status(400).json({ message: 'activity, type, and scheduledFor are required.' });
+    res.status(201).json(await Reminder.create({ activity, type, scheduledFor, status: 'pending' }));
+  } catch (err) { res.status(500).json({ message: err.message }); }
 };
-
 const updateReminderStatus = async (req, res) => {
   try {
     const status = req.body?.status?.trim();
-    if (!status || !['sent', 'pending'].includes(status)) {
-      return res.status(400).json({ message: 'status must be sent or pending.' });
-    }
-
-    const updatedReminder = await Reminder.findByIdAndUpdate(
-      req.params.id,
-      { status },
-      { new: true, runValidators: true },
-    );
-
-    if (!updatedReminder) {
-      return res.status(404).json({ message: 'Reminder not found.' });
-    }
-
-    res.json(updatedReminder);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+    if (!['sent', 'pending'].includes(status)) return res.status(400).json({ message: 'status must be sent or pending.' });
+    const reminder = await Reminder.updateStatus(req.params.id, status);
+    if (!reminder) return res.status(404).json({ message: 'Reminder not found.' });
+    res.json(reminder);
+  } catch (err) { res.status(500).json({ message: err.message }); }
 };
-
 const deleteReminder = async (req, res) => {
   try {
     const reminder = await Reminder.findById(req.params.id);
-    if (!reminder) {
-      return res.status(404).json({ message: 'Reminder not found.' });
-    }
-
-    if (reminder.status === 'sent') {
-      return res.status(409).json({ message: 'Sent reminders cannot be deleted.' });
-    }
-
-    if (reminderInFlight.has(reminder._id.toString())) {
-      return res.status(409).json({ message: 'Reminder is currently sending. Please wait.' });
-    }
-
-    await Reminder.findByIdAndDelete(reminder._id);
+    if (!reminder) return res.status(404).json({ message: 'Reminder not found.' });
+    if (reminder.status === 'sent') return res.status(409).json({ message: 'Sent reminders cannot be deleted.' });
+    if (reminderInFlight.has(String(reminder._id))) return res.status(409).json({ message: 'Reminder is currently sending. Please wait.' });
+    await Reminder.remove(reminder._id);
     res.json({ message: 'Reminder deleted.' });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { res.status(500).json({ message: err.message }); }
 };
-
 const sendBroadcast = async (req, res) => {
   try {
     const title = req.body?.title?.trim();
     const message = req.body?.message?.trim();
-
-    if (!title || !message) {
-      return res.status(400).json({ message: 'title and message are required.' });
-    }
-
-    if (broadcastInFlight) {
-      return res.status(429).json({ message: 'Broadcast is already being sent. Please wait.' });
-    }
-
+    if (!title || !message) return res.status(400).json({ message: 'title and message are required.' });
+    if (broadcastInFlight) return res.status(429).json({ message: 'Broadcast is already being sent. Please wait.' });
     broadcastInFlight = true;
-
-    const users = await User.find({ role: 'employee' }).select('email').lean();
-    const emails = users.map((user) => user.email).filter(Boolean);
-
-    if (!emails.length) {
-      broadcastInFlight = false;
-      return res.json({ sent: 0 });
-    }
-
+    const emails = (await User.findByRole('employee')).map((user) => user.email).filter(Boolean);
     await Promise.all(emails.map((to) => sendEmail({ action: 'broadcast', title, message, to })));
-
-    broadcastInFlight = false;
-
     res.json({ sent: emails.length });
-  } catch (err) {
-    broadcastInFlight = false;
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { res.status(500).json({ message: err.message }); }
+  finally { broadcastInFlight = false; }
 };
-
 const sendReminderNow = async (req, res) => {
+  const id = String(req.params.id);
   try {
-    const reminder = await Reminder.findById(req.params.id);
-    if (!reminder) {
-      return res.status(404).json({ message: 'Reminder not found.' });
-    }
-
-    if (reminder.status === 'sent') {
-      return res.status(409).json({ message: 'Reminder has already been sent.' });
-    }
-
-    if (reminderInFlight.has(reminder._id.toString())) {
-      return res.status(429).json({ message: 'Reminder is already being sent. Please wait.' });
-    }
-
-    reminderInFlight.add(reminder._id.toString());
-
-    const activity = await Activity.findOne({ name: reminder.activity }).select(
-      'name serviceType scheduleDate scheduleTime location',
-    );
-    if (!activity) {
-      reminderInFlight.delete(reminder._id.toString());
-      return res.status(404).json({ message: 'Activity not found.' });
-    }
-
-    const registrations = await Registration.find({ activityId: activity._id })
-      .populate({ path: 'employeeId', select: 'email' })
-      .lean();
-
-    const emails = registrations
-      .map((registration) => registration.employeeId?.email)
-      .filter(Boolean);
-
-    if (!emails.length) {
-      reminderInFlight.delete(reminder._id.toString());
-      return res.json({ sent: 0 });
-    }
-
-    await Promise.all(
-      emails.map((to) =>
-        sendEmail({
-          action: 'reminder',
-          activity: reminder.activity,
-          scheduleDate: activity.scheduleDate,
-          scheduleTime: activity.scheduleTime,
-          location: activity.location,
-          serviceType: activity.serviceType,
-          to,
-        }),
-      ),
-    );
-
-    const updatedReminder = await Reminder.findByIdAndUpdate(
-      reminder._id,
-      { status: 'sent' },
-      { new: true, runValidators: true },
-    );
-
-    reminderInFlight.delete(reminder._id.toString());
-
+    const reminder = await Reminder.findById(id);
+    if (!reminder) return res.status(404).json({ message: 'Reminder not found.' });
+    if (reminder.status === 'sent') return res.status(409).json({ message: 'Reminder has already been sent.' });
+    if (reminderInFlight.has(id)) return res.status(429).json({ message: 'Reminder is already being sent. Please wait.' });
+    reminderInFlight.add(id);
+    const activity = await Activity.findOneByName(reminder.activity);
+    if (!activity) return res.status(404).json({ message: 'Activity not found.' });
+    const registrations = await Registration.findByActivity(activity._id);
+    const employees = await Promise.all(registrations.map((item) => User.findById(item.employeeId)));
+    const emails = employees.map((user) => user?.email).filter(Boolean);
+    await Promise.all(emails.map((to) => sendEmail({ action: 'reminder', activity: activity.name,
+      scheduleDate: activity.scheduleDate, scheduleTime: activity.scheduleTime, location: activity.location,
+      serviceType: activity.serviceType, to })));
+    const updatedReminder = await Reminder.updateStatus(id, 'sent');
     res.json({ sent: emails.length, reminder: updatedReminder });
-  } catch (err) {
-    if (req.params?.id) {
-      reminderInFlight.delete(req.params.id.toString());
-    }
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { res.status(500).json({ message: err.message }); }
+  finally { reminderInFlight.delete(id); }
 };
 
-module.exports = {
-  listReminders,
-  createReminder,
-  updateReminderStatus,
-  deleteReminder,
-  sendBroadcast,
-  sendReminderNow,
-};
+module.exports = { listReminders, createReminder, updateReminderStatus, deleteReminder, sendBroadcast, sendReminderNow };

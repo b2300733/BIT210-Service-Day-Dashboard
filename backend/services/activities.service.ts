@@ -5,7 +5,9 @@ import { BehaviorSubject, Observable, throwError } from 'rxjs';
 import { tap, catchError } from 'rxjs/operators';
 import { Activity } from '../../src/app/models/activity.model';
 
-const API_URL = 'http://localhost:3000/api/activities';
+import { API_BASE_URL } from './api-base';
+
+const API_URL = `${API_BASE_URL}/activities`;
 
 @Injectable({
   providedIn: 'root',

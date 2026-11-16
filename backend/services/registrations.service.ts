@@ -49,7 +49,9 @@ export interface RegistrationTimeline {
   registrations: number;
 }
 
-const API_URL = 'http://localhost:3000/api/registrations';
+import { API_BASE_URL } from './api-base';
+
+const API_URL = `${API_BASE_URL}/registrations`;
 
 @Injectable({
   providedIn: 'root',
